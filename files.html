@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<title>Files - GoldNotes</title>
+
+<style>
+body{
+    background: linear-gradient(to bottom,#f8f6f2,#f3efe7);
+}
+.card{
+    background:white;
+    border-radius:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+.gold-btn{
+    background: linear-gradient(90deg,#d4af37,#f5d76e);
+}
+</style>
+</head>
+
+<body class="p-6">
+
+<h2 id="pageTitle" class="text-3xl font-bold text-center text-yellow-700 mb-10"></h2>
+
+<div id="contentContainer" class="grid gap-6"></div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const type = params.get("type");
+const subject = params.get("subject");
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+    window.location.href = "login.html";
+}
+
+const pageTitle = document.getElementById("pageTitle");
+const container = document.getElementById("contentContainer");
+
+pageTitle.innerText = subject + " - " + type.toUpperCase();
+
+const fileData = {
+    
+    "DBMS": {
+        study: ["2ndYear/SEM3/dbms_studymaterial.pdf"],
+        notes: ["2ndYear/SEM3/dbms_studymaterial.pdf"],
+        pyq: ["2ndYear/SEM3/dbms_studymaterial.pdf"],
+        yt: "https://youtube.com/playlist?list=PLxCzCOWd7aiFAN6I8CuViBuCdJgiOkT2Y"
+    },
+    "AOA": {
+        study: ["2ndYear/SEM3/aoa_studymaterial.pdf"],
+        notes: [],
+        pyq: [],
+        yt: "https://youtube.com/playlist?list=PLxCzCOWd7aiHcmS4i14bI0VrMbZTUvlTa"
+    },
+    "OOP": {
+        study: ["2ndYear/SEM3/oop_studymaterial.pdf"],
+        notes: ["2ndYear/SEM3/oop_studymaterial.pdf"],
+        pyq: ["2ndYear/SEM3/oop_studymaterial.pdf"],
+        yt: "https://youtube.com/playlist?list=PLsyeobzWxl7oa1WO9n4cP3OY9nOtUcZIg"
+    },
+    "EVS": {
+        study: ["2ndYear/SEM3/evs_studymaterial.pdf"],
+        notes: [],
+        pyq: [],
+        yt: "https://youtube.com/playlist?list=PL3qvHcrYGy1u2egw2tipHWODV6elVC2Gg"
+    },
+
+ "SEPM": {
+        study: ["2ndYear/SEM4/sepm_studymaterial.pdf"],
+        notes: ["2ndYear/SEM4/sepm_studymaterial.pdf"],
+        pyq: ["2ndYear/SEM3/sepm_studymaterial.pdf"],
+        yt: "https://youtube.com/playlist?list=PLxCzCOWd7aiEed7SKZBnC6ypFDWYLRvB2&si=73CuYxg8IzcZZetq"
+    },
+    "MAM": {
+        study: ["2ndYear/SEM4/mam_studymaterial.pdf"],
+        notes: [],
+        pyq: [],
+        yt: "https://youtube.com/playlist?list=PLxCzCOWd7aiHL7mF_dRsj4Q9x1NNaZqkh&si=wfHryc2LFV9qas9y"
+    },
+    "DT": {
+        study: ["2ndYear/SEM4/dt_studymaterial.pdf"],
+        notes: ["2ndYear/SEM4/dt_studymaterial.pdf"],
+        pyq: ["2ndYear/SEM4/dt_studymaterial.pdf"],
+        yt: "https://youtube.com/playlist?list=PLsh2FvSr3n7ctIa1TY50t5jP7_gLmfgvE&si=5yY3-gfXZQ7hsZ1l"
+    },
+    "MDM-info-sec": {
+        study: ["2ndYear/SEM4/mdmis_studymaterial.pdf"],
+        notes: [],
+        pyq: [],
+        yt: "https://youtube.com/playlist?list=PLBlnK6fEyqRgJU3EsOYDTW7m6SUmW6kII&si=Z8GRFdCGSX731IZY"
+    },
+
+
+};
+
+if(fileData[subject]){
+
+    if(type === "yt"){
+
+        const btn = document.createElement("a");
+        btn.href = fileData[subject].yt;
+        btn.target = "_blank";
+        btn.className = "gold-btn p-4 rounded-xl text-white text-center";
+        btn.innerText = "Open YouTube Playlist";
+
+        container.appendChild(btn);
+
+    } else {
+
+        const files = fileData[subject][type];
+
+        if(!files || files.length === 0){
+            container.innerHTML = "<p>No files available yet.</p>";
+        }
+
+        files.forEach(file => {
+
+            const fullPath = `http://localhost:5000/files/${file}`;
+
+            // Extract Year & Semester from file path
+            const yearMatch = file.match(/(\d+)(st|nd|rd|th)?Year/i);
+            const semMatch = file.match(/SEM(\d+)/i);
+
+            const year = yearMatch ? yearMatch[1] : null;
+            const semester = semMatch ? semMatch[1] : null;
+
+            const fileName = file.split("/").pop();
+
+            const card = document.createElement("div");
+            card.className = "card p-6";
+
+            card.innerHTML = `
+                <p class="mb-4 font-semibold">${fileName}</p>
+                <a href="${fullPath}" 
+                   target="_blank"
+                   onclick="trackDownload('${subject}', '${fileName}', '${year}', '${semester}', '${type}', '${fullPath}')"
+                   class="gold-btn px-4 py-2 rounded-xl text-white">
+                   Download
+                </a>
+            `;
+
+            container.appendChild(card);
+        });
+    }
+}
+
+async function trackDownload(subject, fileName, year, semester, type, filePath){
+
+    await fetch("http://localhost:5000/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: user.id,
+            subject: subject,
+            file_name: fileName,
+            year: year,
+            semester: semester,
+            type: type,
+            file_path: filePath
+        })
+    });
+}
+
+</script>
+
+</body>
+</html>

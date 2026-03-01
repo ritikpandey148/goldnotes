@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<title>Subjects</title>
+
+<style>
+body{
+    background: linear-gradient(to bottom,#f8f6f2,#f3efe7);
+}
+.card{
+    background:white;
+    border-radius:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+</style>
+</head>
+
+<body class="p-6">
+
+<h2 id="semesterTitle" class="text-3xl font-bold text-center text-yellow-700 mb-3">
+</h2>
+
+<p class="text-center text-gray-600 mb-8">
+    Study start karo jaldi! 🚀 Isbar Top karna !!
+</p>
+
+<div id="subjectsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+</div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const sem = params.get("sem");
+
+const semesterTitle = document.getElementById("semesterTitle");
+const subjectsContainer = document.getElementById("subjectsContainer");
+
+semesterTitle.innerText = "SEM - " + sem + " Subjects";
+
+const semesterSubjects = {
+
+    1: ["Physics", "Chemistry", "Mathematics I", "Basic Electronics" , "E-Mechanics", "c/c++"],
+    2: ["Mathematics II", "Python", "physics-2", "chmistry-2", "E-Graphics"],
+    3: ["DBMS", "AOA", "DMGT", "EVS" , "OOP"],
+    4: ["STO", "SEPM", "MAM", "DT", "MDM-info-sec"],
+    5: ["Artificial Intelligence", "Web Development", "Microprocessors", "Data Analytics"],
+    6: ["Machine Learning", "Cloud Computing", "Compiler Design", "Cyber Security"],
+    7: ["Big Data", "Blockchain", "Internet of Things", "Project Phase I"],
+    8: ["Project Phase II", "Advanced AI", "Mobile App Development", "Entrepreneurship"]
+
+};
+
+if(semesterSubjects[sem]){
+
+    semesterSubjects[sem].forEach(subject => {
+
+        const link = document.createElement("a");
+
+        // 🔥 FIX HERE (NO 'S')
+        link.href = `material.html?subject=${encodeURIComponent(subject)}`;
+
+        link.className = "card p-6 hover:scale-105 transition font-semibold text-center";
+        link.innerText = subject;
+
+        subjectsContainer.appendChild(link);
+
+    });
+
+} else {
+
+    subjectsContainer.innerHTML = `
+        <p class="text-center col-span-2 text-gray-500">
+            No subjects found for this semester.
+        </p>
+    `;
+}
+
+</script>
+
+</body>
+</html>

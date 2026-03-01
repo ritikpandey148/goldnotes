@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sign Up - GoldNotes</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(to bottom,#f8f6f2,#f3efe7);
+}
+.gold-btn{
+    background: linear-gradient(90deg,#d4af37,#f5d76e);
+}
+</style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen">
+
+<div class="bg-white p-8 rounded-3xl shadow-xl w-96">
+
+    <h2 class="text-center text-2xl font-bold mb-6 text-gray-700">
+        Create Account
+    </h2>
+
+    <!-- First Name -->
+    <input id="firstName" placeholder="First Name"
+        class="w-full p-2 border rounded-xl mb-3">
+
+    <!-- Last Name -->
+    <input id="lastName" placeholder="Last Name"
+        class="w-full p-2 border rounded-xl mb-3">
+
+    <!-- Gender -->
+    <select id="gender"
+        class="w-full p-2 border rounded-xl mb-3">
+        <option value="">Select Gender</option>
+        <option>Male</option>
+        <option>Female</option>
+        <option>Other</option>
+    </select>
+
+    <!-- DOB -->
+    <input id="dob" type="date"
+        class="w-full p-2 border rounded-xl mb-3">
+
+    <!-- Year of Study -->
+    <select id="year"
+        class="w-full p-2 border rounded-xl mb-3">
+        <option value="">Select Year</option>
+        <option>1st Year</option>
+        <option>2nd Year</option>
+        <option>3rd Year</option>
+        <option>4th Year</option>
+    </select>
+
+    <!-- Username -->
+    <input id="username" placeholder="Create Username"
+        class="w-full p-2 border rounded-xl mb-3">
+
+    <!-- Password -->
+    <input id="password" type="password" placeholder="Create Password"
+        class="w-full p-2 border rounded-xl mb-4">
+
+    <button type="button" onclick="registerUser()"
+        class="gold-btn w-full py-3 rounded-xl text-white font-semibold">
+        Create Account
+    </button>
+
+    <p class="text-center mt-4 text-gray-500">
+        Already have account?
+        <a href="login.html" class="text-yellow-600 font-semibold">Login</a>
+    </p>
+
+</div>
+
+<script>
+async function registerUser() {
+
+    const data = {
+        first_name: document.getElementById("firstName").value,
+        last_name: document.getElementById("lastName").value,
+        gender: document.getElementById("gender").value,
+        dob: document.getElementById("dob").value,
+        year: document.getElementById("year").value,
+        username: document.getElementById("username").value,
+        password: document.getElementById("password").value
+    };
+
+    if (!data.first_name || !data.last_name || !data.gender || !data.dob || !data.year || !data.username || !data.password) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    const response = await fetch("http://localhost:5000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if(response.ok){
+        alert("Account Created Successfully");
+        window.location.href = "login.html";
+    } else {
+        alert(result.message);
+    }
+}
+</script>
+
+</body>
+</html>

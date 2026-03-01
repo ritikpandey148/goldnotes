@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<title>My Downloads</title>
+
+<style>
+body{
+    background: linear-gradient(to bottom,#f8f6f2,#f3efe7);
+}
+.card{
+    background:white;
+    border-radius:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+</style>
+</head>
+
+<body class="p-6">
+
+<h2 class="text-3xl font-bold text-center text-yellow-700 mb-10">
+My Downloads
+</h2>
+
+<div class="card p-6 overflow-x-auto">
+    <table class="w-full text-sm text-left">
+        <thead class="border-b">
+            <tr class="text-gray-700">
+                <th class="p-3">Subject</th>
+                <th class="p-3">Year</th>
+                <th class="p-3">Semester</th>
+                <th class="p-3">Type</th>
+                <th class="p-3">Downloaded On</th>
+                <th class="p-3">Open</th>
+            </tr>
+        </thead>
+        <tbody id="downloadsBody">
+        </tbody>
+    </table>
+</div>
+
+<script>
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+    window.location.href = "login.html";
+}
+
+fetch(`http://localhost:5000/get-downloads/${user.id}`)
+.then(res => res.json())
+.then(data => {
+
+    const tbody = document.getElementById("downloadsBody");
+
+    if(data.length === 0){
+        tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center p-6 text-gray-500">
+                No downloads yet 🚀
+            </td>
+        </tr>
+        `;
+        return;
+    }
+
+    data.forEach(item => {
+
+        const row = document.createElement("tr");
+        row.className = "border-b hover:bg-yellow-50 transition";
+
+        row.innerHTML = `
+            <td class="p-3 font-semibold">${item.subject || "-"}</td>
+            <td class="p-3">${item.year || "-"}</td>
+            <td class="p-3">SEM ${item.semester || "-"}</td>
+            <td class="p-3 capitalize">${item.type || "-"}</td>
+            <td class="p-3">${new Date(item.downloaded_at).toLocaleString()}</td>
+            <td class="p-3">
+                <a href="${item.file_path}" target="_blank"
+                class="bg-yellow-600 text-white px-3 py-1 rounded-lg hover:scale-105 transition">
+                View
+                </a>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+
+})
+.catch(err => {
+    console.error(err);
+});
+
+</script>
+
+</body>
+</html>
