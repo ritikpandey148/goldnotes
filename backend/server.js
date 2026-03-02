@@ -14,7 +14,6 @@ app.use(cors());
 app.use(express.json());
 
 // ================= SERVE FRONTEND =================
-// Serve all HTML/CSS/JS files from project root
 app.use(express.static(path.join(__dirname, "..")));
 
 // ================= SERVE PDF FILES =================
@@ -204,6 +203,10 @@ app.post("/vote", (req, res) => {
 });
 
 // ================= SERVER START =================
-app.listen(5000, () => {
-    console.log("🚀 Server running on http://localhost:5000");
+
+// 🔥 VERY IMPORTANT FOR RENDER
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server running on port ${PORT}`);
 });
