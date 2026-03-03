@@ -1,4 +1,4 @@
-// ================= LOAD ENV FIRST =================
+// ================= LOAD ENV =================
 require("dotenv").config();
 
 const express = require("express");
@@ -9,22 +9,31 @@ const db = require("./db");
 
 const app = express();
 
-// ================= MIDDLEWARE =================
-app.use(cors());
+// ================= CORS CONFIG =================
+app.use(cors({
+    origin: [
+        "https://goldnotes.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:5000"
+    ],
+    credentials: true
+}));
+
 app.use(express.json());
 
-// ================= SERVE FRONTEND =================
+// ================= SERVE FRONTEND (optional) =================
 app.use(express.static(path.join(__dirname, "..")));
 
 // ================= SERVE PDF FILES =================
-app.use("/files", express.static(path.join(__dirname, "uploads")));
+// 🔥 Make sure your PDFs are inside backend/uploads folder
+const uploadsPath = path.join(__dirname, "uploads");
+app.use("/files", express.static(uploadsPath));
 
-console.log("Frontend Path:", path.join(__dirname, ".."));
-console.log("Uploads Path:", path.join(__dirname, "uploads"));
+console.log("Uploads Path:", uploadsPath);
 
-// ================= DEFAULT ROUTE =================
+// ================= ROOT =================
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "..", "index.html"));
+    res.send("GoldNotes Backend Running 🚀");
 });
 
 // ================= REGISTER =================
@@ -86,7 +95,6 @@ app.post("/login", (req, res) => {
         }
 
         const user = result[0];
-
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
@@ -107,28 +115,6 @@ app.post("/login", (req, res) => {
         });
 
     });
-});
-
-// ================= UPDATE PROFILE =================
-app.post("/update-profile", (req, res) => {
-
-    const { id, first_name, last_name, gender, dob, year } = req.body;
-
-    const sql = `
-        UPDATE users 
-        SET first_name=?, last_name=?, gender=?, dob=?, year=?
-        WHERE id=?
-    `;
-
-    db.query(sql, [first_name, last_name, gender, dob, year, id], (err) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ message: "Update Failed" });
-        }
-
-        res.json({ message: "Profile Updated Successfully" });
-    });
-
 });
 
 // ================= DOWNLOAD TRACK =================
@@ -159,29 +145,6 @@ app.post("/download", (req, res) => {
     );
 });
 
-// ================= GET DOWNLOADS =================
-app.get("/get-downloads/:id", (req, res) => {
-
-    const userId = req.params.id;
-
-    const sql = `
-        SELECT subject, file_name, year, semester, type, file_path, downloaded_at
-        FROM downloads
-        WHERE user_id = ?
-        ORDER BY downloaded_at DESC
-    `;
-
-    db.query(sql, [userId], (err, result) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ message: "Error fetching downloads" });
-        }
-
-        res.json(result);
-    });
-
-});
-
 // ================= VOTE =================
 app.post("/vote", (req, res) => {
 
@@ -202,9 +165,12 @@ app.post("/vote", (req, res) => {
 
 });
 
-// ================= SERVER START =================
+// ================= ERROR HANDLER =================
+app.use((req, res) => {
+    res.status(404).json({ message: "Route Not Found" });
+});
 
-// 🔥 VERY IMPORTANT FOR RENDER
+// ================= SERVER START =================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, "0.0.0.0", () => {
