@@ -59,30 +59,38 @@ body{
 
 <script>
 
+// ================= CONFIG =================
+const API_BASE = "https://goldnotes-backend.onrender.com";
+
 // ================= SUBJECT SETUP =================
 const params = new URLSearchParams(window.location.search);
 const subject = params.get("subject");
 const user = JSON.parse(localStorage.getItem("user"));
 
+// Login protection
 if(!user){
     window.location.href = "login.html";
 }
 
-if(subject){
-    document.getElementById("subjectTitle").innerText = subject;
-
-    document.getElementById("studyLink").href =
-        `files.html?type=study&subject=${encodeURIComponent(subject)}`;
-
-    document.getElementById("notesLink").href =
-        `files.html?type=notes&subject=${encodeURIComponent(subject)}`;
-
-    document.getElementById("pyqLink").href =
-        `files.html?type=pyq&subject=${encodeURIComponent(subject)}`;
-
-    document.getElementById("ytLink").href =
-        `files.html?type=yt&subject=${encodeURIComponent(subject)}`;
+// Safety check
+if(!subject){
+    document.getElementById("subjectTitle").innerText = "Invalid Subject";
+    throw new Error("Subject missing in URL");
 }
+
+document.getElementById("subjectTitle").innerText = subject;
+
+document.getElementById("studyLink").href =
+    `files.html?type=study&subject=${encodeURIComponent(subject)}`;
+
+document.getElementById("notesLink").href =
+    `files.html?type=notes&subject=${encodeURIComponent(subject)}`;
+
+document.getElementById("pyqLink").href =
+    `files.html?type=pyq&subject=${encodeURIComponent(subject)}`;
+
+document.getElementById("ytLink").href =
+    `files.html?type=yt&subject=${encodeURIComponent(subject)}`;
 
 
 // ================= VOTE FUNCTION =================
@@ -93,28 +101,39 @@ async function voteSubject(){
         return;
     }
 
-    const res = await fetch("http://localhost:5000/vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            user_id: user.id,
-            subject: subject
-        })
-    });
+    try {
 
-    const data = await res.json();
-    const voteMsg = document.getElementById("voteMsg");
+        const res = await fetch(`${API_BASE}/vote`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: user.id,
+                subject: subject
+            })
+        });
 
-    if(res.status === 400){
-        voteMsg.innerText = "❌ You already voted for this subject";
-        voteMsg.className = "mt-3 text-sm text-red-600";
-    } else {
-        voteMsg.innerText = "✅ Vote added successfully!";
-        voteMsg.className = "mt-3 text-sm text-green-600";
+        const voteMsg = document.getElementById("voteMsg");
+
+        if(res.status === 400){
+            voteMsg.innerText = "❌ You already voted for this subject";
+            voteMsg.className = "mt-3 text-sm text-red-600";
+        } 
+        else if(res.ok){
+            voteMsg.innerText = "✅ Vote added successfully!";
+            voteMsg.className = "mt-3 text-sm text-green-600";
+        }
+        else{
+            voteMsg.innerText = "Something went wrong";
+            voteMsg.className = "mt-3 text-sm text-red-600";
+        }
+
+    } catch(error){
+        alert("Server not responding. Please try again later.");
+        console.error(error);
     }
 }
 
 </script>
 
 </body>
-</html>SS
+</html>
