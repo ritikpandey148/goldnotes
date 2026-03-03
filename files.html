@@ -28,6 +28,10 @@ body{
 
 <script>
 
+// ================= CONFIG =================
+const API_BASE = "https://goldnotes-backend.onrender.com";
+
+// ================= PARAMS =================
 const params = new URLSearchParams(window.location.search);
 const type = params.get("type");
 const subject = params.get("subject");
@@ -43,6 +47,7 @@ const container = document.getElementById("contentContainer");
 
 pageTitle.innerText = subject + " - " + type.toUpperCase();
 
+// ================= FILE DATA =================
 const fileData = {
     
     "DBMS": {
@@ -51,18 +56,21 @@ const fileData = {
         pyq: ["2ndYear/SEM3/dbms_studymaterial.pdf"],
         yt: "https://youtube.com/playlist?list=PLxCzCOWd7aiFAN6I8CuViBuCdJgiOkT2Y"
     },
+
     "AOA": {
         study: ["2ndYear/SEM3/aoa_studymaterial.pdf"],
         notes: [],
         pyq: [],
         yt: "https://youtube.com/playlist?list=PLxCzCOWd7aiHcmS4i14bI0VrMbZTUvlTa"
     },
+
     "OOP": {
         study: ["2ndYear/SEM3/oop_studymaterial.pdf"],
         notes: ["2ndYear/SEM3/oop_studymaterial.pdf"],
         pyq: ["2ndYear/SEM3/oop_studymaterial.pdf"],
         yt: "https://youtube.com/playlist?list=PLsyeobzWxl7oa1WO9n4cP3OY9nOtUcZIg"
     },
+
     "EVS": {
         study: ["2ndYear/SEM3/evs_studymaterial.pdf"],
         notes: [],
@@ -70,34 +78,36 @@ const fileData = {
         yt: "https://youtube.com/playlist?list=PL3qvHcrYGy1u2egw2tipHWODV6elVC2Gg"
     },
 
- "SEPM": {
+    "SEPM": {
         study: ["2ndYear/SEM4/sepm_studymaterial.pdf"],
         notes: ["2ndYear/SEM4/sepm_studymaterial.pdf"],
-        pyq: ["2ndYear/SEM3/sepm_studymaterial.pdf"],
-        yt: "https://youtube.com/playlist?list=PLxCzCOWd7aiEed7SKZBnC6ypFDWYLRvB2&si=73CuYxg8IzcZZetq"
+        pyq: ["2ndYear/SEM4/sepm_studymaterial.pdf"],
+        yt: "https://youtube.com/playlist?list=PLxCzCOWd7aiEed7SKZBnC6ypFDWYLRvB2"
     },
+
     "MAM": {
         study: ["2ndYear/SEM4/mam_studymaterial.pdf"],
         notes: [],
         pyq: [],
-        yt: "https://youtube.com/playlist?list=PLxCzCOWd7aiHL7mF_dRsj4Q9x1NNaZqkh&si=wfHryc2LFV9qas9y"
+        yt: "https://youtube.com/playlist?list=PLxCzCOWd7aiHL7mF_dRsj4Q9x1NNaZqkh"
     },
+
     "DT": {
         study: ["2ndYear/SEM4/dt_studymaterial.pdf"],
         notes: ["2ndYear/SEM4/dt_studymaterial.pdf"],
         pyq: ["2ndYear/SEM4/dt_studymaterial.pdf"],
-        yt: "https://youtube.com/playlist?list=PLsh2FvSr3n7ctIa1TY50t5jP7_gLmfgvE&si=5yY3-gfXZQ7hsZ1l"
+        yt: "https://youtube.com/playlist?list=PLsh2FvSr3n7ctIa1TY50t5jP7_gLmfgvE"
     },
+
     "MDM-info-sec": {
         study: ["2ndYear/SEM4/mdmis_studymaterial.pdf"],
         notes: [],
         pyq: [],
-        yt: "https://youtube.com/playlist?list=PLBlnK6fEyqRgJU3EsOYDTW7m6SUmW6kII&si=Z8GRFdCGSX731IZY"
+        yt: "https://youtube.com/playlist?list=PLBlnK6fEyqRgJU3EsOYDTW7m6SUmW6kII"
     },
-
-
 };
 
+// ================= MAIN LOGIC =================
 if(fileData[subject]){
 
     if(type === "yt"){
@@ -116,13 +126,13 @@ if(fileData[subject]){
 
         if(!files || files.length === 0){
             container.innerHTML = "<p>No files available yet.</p>";
+            return;
         }
 
         files.forEach(file => {
 
-            const fullPath = `http://localhost:5000/files/${file}`;
+            const fullPath = `${API_BASE}/files/${file}`;
 
-            // Extract Year & Semester from file path
             const yearMatch = file.match(/(\d+)(st|nd|rd|th)?Year/i);
             const semMatch = file.match(/SEM(\d+)/i);
 
@@ -149,21 +159,26 @@ if(fileData[subject]){
     }
 }
 
+// ================= TRACK DOWNLOAD =================
 async function trackDownload(subject, fileName, year, semester, type, filePath){
 
-    await fetch("http://localhost:5000/download", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            user_id: user.id,
-            subject: subject,
-            file_name: fileName,
-            year: year,
-            semester: semester,
-            type: type,
-            file_path: filePath
-        })
-    });
+    try{
+        await fetch(`${API_BASE}/download`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: user.id,
+                subject: subject,
+                file_name: fileName,
+                year: year,
+                semester: semester,
+                type: type,
+                file_path: filePath
+            })
+        });
+    } catch(error){
+        console.error("Download tracking failed:", error);
+    }
 }
 
 </script>
