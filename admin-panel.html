@@ -8,17 +8,21 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
+
 body{
 background:linear-gradient(to bottom,#f8f6f2,#f3efe7);
 }
+
 .card{
 background:white;
 border-radius:20px;
 box-shadow:0 10px 25px rgba(0,0,0,0.08);
 }
+
 .gold-btn{
 background:linear-gradient(90deg,#d4af37,#f5d76e);
 }
+
 </style>
 
 </head>
@@ -31,92 +35,71 @@ GoldNotes Admin Panel
 
 <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
 
-<!-- ================= UPLOAD / REPLACE ================= -->
+<!-- ================= UPLOAD ================= -->
 
 <div class="card p-6">
 
 <h2 class="text-xl font-semibold mb-4">
-Upload / Replace Notes
+Upload Notes
 </h2>
 
-<select id="year" class="w-full border p-2 rounded mb-3">
-<option value="1stYear">1st Year</option>
-<option value="2ndYear">2nd Year</option>
-<option value="3rdYear">3rd Year</option>
-<option value="4thYear">4th Year</option>
-</select>
+<select id="year" class="w-full border p-2 rounded mb-3"></select>
 
-<select id="semester" class="w-full border p-2 rounded mb-3">
-<option value="SEM1">SEM1</option>
-<option value="SEM2">SEM2</option>
-<option value="SEM3">SEM3</option>
-<option value="SEM4">SEM4</option>
-<option value="SEM5">SEM5</option>
-<option value="SEM6">SEM6</option>
-<option value="SEM7">SEM7</option>
-<option value="SEM8">SEM8</option>
-</select>
+<select id="semester" class="w-full border p-2 rounded mb-3"></select>
 
-<input id="subject"
-placeholder="Subject Name (Example: DBMS)"
-class="w-full border p-2 rounded mb-3">
+<select id="subject" class="w-full border p-2 rounded mb-3"></select>
 
 <select id="type" class="w-full border p-2 rounded mb-3">
-<option value="studymaterial">Study Material</option>
+
+<option value="study">Study Material</option>
 <option value="notes">Important Notes</option>
 <option value="pyq">PYQ</option>
+
 </select>
+
+<input type="text"
+id="title"
+placeholder="Title (Example: Important Questions)"
+class="w-full border p-2 rounded mb-3">
 
 <input type="file" id="pdfFile" class="mb-4">
 
-<div class="flex gap-4">
-
 <button onclick="uploadNote()"
 class="gold-btn text-white px-4 py-2 rounded">
+
 Upload
-</button>
 
-<button onclick="replaceNote()"
-class="bg-yellow-600 text-white px-4 py-2 rounded">
-Replace
 </button>
-
-</div>
 
 <p id="uploadMsg" class="mt-3 text-sm"></p>
 
 </div>
 
-<!-- ================= DELETE ================= -->
+<!-- ================= YT PLAYLIST ================= -->
 
 <div class="card p-6">
 
 <h2 class="text-xl font-semibold mb-4">
-Delete Notes
+Add YouTube Playlist
 </h2>
 
-<input id="deleteYear"
-placeholder="Year (Example: 2ndYear)"
-class="w-full border p-2 rounded mb-3">
-
-<input id="deleteSem"
-placeholder="Semester (Example: SEM3)"
-class="w-full border p-2 rounded mb-3">
-
-<input id="deleteFile"
-placeholder="File name (Example: DBMS_notes.pdf)"
+<input id="ytLink"
+placeholder="Paste YouTube Playlist Link"
 class="w-full border p-2 rounded mb-4">
 
-<button onclick="deleteNote()"
+<button onclick="addYT()"
 class="bg-red-600 text-white px-4 py-2 rounded">
-Delete File
+
+Add Playlist
+
 </button>
 
-<p id="deleteMsg" class="mt-3 text-sm"></p>
+<p id="ytMsg" class="mt-3 text-sm"></p>
 
 </div>
 
 </div>
+
 
 <!-- ================= ANALYTICS ================= -->
 
@@ -128,12 +111,15 @@ Download Analytics
 
 <button onclick="loadAnalytics()"
 class="gold-btn text-white px-4 py-2 rounded mb-4">
+
 Load Analytics
+
 </button>
 
 <div id="analytics"></div>
 
 </div>
+
 
 <script>
 
@@ -146,16 +132,168 @@ alert("Access Denied")
 window.location.href="/dashboard.html"
 }
 
+
+// ================= SUBJECT DATABASE =================
+
+const subjectsData = {
+
+"1stYear":{
+
+"SEM1":[
+"Physics",
+"Chemistry",
+"Mathematics I",
+"Basic Electronics",
+"E-Mechanics",
+"c/c++"
+],
+
+"SEM2":[
+"Mathematics II",
+"Python",
+"physics-2",
+"chmistry-2",
+"E-Graphics"
+]
+
+},
+
+"2ndYear":{
+
+"SEM3":[
+"DBMS",
+"AOA",
+"DMGT",
+"EVS",
+"OOP"
+],
+
+"SEM4":[
+"STO",
+"SEPM",
+"MAM",
+"DT",
+"MDM-info-sec"
+]
+
+},
+
+"3rdYear":{
+
+"SEM5":[
+"Artificial Intelligence",
+"Web Development",
+"Microprocessors",
+"Data Analytics"
+],
+
+"SEM6":[
+"Machine Learning",
+"Cloud Computing",
+"Compiler Design",
+"Cyber Security"
+]
+
+},
+
+"4thYear":{
+
+"SEM7":[
+"Big Data",
+"Blockchain",
+"Internet of Things",
+"Project Phase I"
+],
+
+"SEM8":[
+"Project Phase II",
+"Advanced AI",
+"Mobile App Development",
+"Entrepreneurship"
+]
+
+}
+
+}
+
+// ================= SELECTORS =================
+
+const yearSelect=document.getElementById("year")
+const semSelect=document.getElementById("semester")
+const subjectSelect=document.getElementById("subject")
+
+function loadYears(){
+
+Object.keys(subjectsData).forEach(year=>{
+
+const opt=document.createElement("option")
+opt.value=year
+opt.innerText=year
+
+yearSelect.appendChild(opt)
+
+})
+
+loadSemesters()
+
+}
+
+function loadSemesters(){
+
+const year=yearSelect.value
+
+semSelect.innerHTML=""
+
+Object.keys(subjectsData[year]).forEach(sem=>{
+
+const opt=document.createElement("option")
+opt.value=sem
+opt.innerText=sem
+
+semSelect.appendChild(opt)
+
+})
+
+loadSubjects()
+
+}
+
+function loadSubjects(){
+
+const year=yearSelect.value
+const sem=semSelect.value
+
+subjectSelect.innerHTML=""
+
+subjectsData[year][sem].forEach(sub=>{
+
+const opt=document.createElement("option")
+opt.value=sub
+opt.innerText=sub
+
+subjectSelect.appendChild(opt)
+
+})
+
+}
+
+yearSelect.addEventListener("change",loadSemesters)
+semSelect.addEventListener("change",loadSubjects)
+
+loadYears()
+
+
 // ================= UPLOAD =================
 
 async function uploadNote(){
 
 const form=new FormData()
 
-form.append("year",document.getElementById("year").value)
-form.append("semester",document.getElementById("semester").value)
-form.append("subject",document.getElementById("subject").value)
+form.append("year",yearSelect.value)
+form.append("semester",semSelect.value)
+form.append("subject",subjectSelect.value)
 form.append("type",document.getElementById("type").value)
+form.append("title",document.getElementById("title").value)
 form.append("pdf",document.getElementById("pdfFile").files[0])
 
 const res=await fetch(`${API}/admin/upload`,{
@@ -169,36 +307,14 @@ document.getElementById("uploadMsg").innerText=data.message
 
 }
 
-// ================= REPLACE =================
 
-async function replaceNote(){
+// ================= ADD YT =================
 
-const form=new FormData()
+async function addYT(){
 
-form.append("year",document.getElementById("year").value)
-form.append("semester",document.getElementById("semester").value)
-form.append("subject",document.getElementById("subject").value)
-form.append("type",document.getElementById("type").value)
-form.append("pdf",document.getElementById("pdfFile").files[0])
+const res=await fetch(`${API}/admin/add-yt`,{
 
-const res=await fetch(`${API}/admin/replace`,{
 method:"POST",
-body:form
-})
-
-const data=await res.json()
-
-document.getElementById("uploadMsg").innerText=data.message
-
-}
-
-// ================= DELETE =================
-
-async function deleteNote(){
-
-const res=await fetch(`${API}/admin/delete`,{
-
-method:"DELETE",
 
 headers:{
 "Content-Type":"application/json"
@@ -206,9 +322,10 @@ headers:{
 
 body:JSON.stringify({
 
-year:document.getElementById("deleteYear").value,
-semester:document.getElementById("deleteSem").value,
-filename:document.getElementById("deleteFile").value
+year:yearSelect.value,
+semester:semSelect.value,
+subject:subjectSelect.value,
+link:document.getElementById("ytLink").value
 
 })
 
@@ -216,9 +333,10 @@ filename:document.getElementById("deleteFile").value
 
 const data=await res.json()
 
-document.getElementById("deleteMsg").innerText=data.message
+document.getElementById("ytMsg").innerText=data.message
 
 }
+
 
 // ================= ANALYTICS =================
 

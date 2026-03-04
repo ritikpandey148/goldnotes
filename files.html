@@ -7,15 +7,15 @@
 
 <style>
 body{
-    background: linear-gradient(to bottom,#f8f6f2,#f3efe7);
+background: linear-gradient(to bottom,#f8f6f2,#f3efe7);
 }
 .card{
-    background:white;
-    border-radius:20px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+background:white;
+border-radius:20px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
 }
 .gold-btn{
-    background: linear-gradient(90deg,#d4af37,#f5d76e);
+background: linear-gradient(90deg,#d4af37,#f5d76e);
 }
 </style>
 </head>
@@ -29,154 +29,117 @@ body{
 <script>
 
 // ================= CONFIG =================
-const API_BASE = "https://goldnotes-backend.onrender.com";
+const API_BASE="https://goldnotes-backend.onrender.com"
 
 // ================= PARAMS =================
-const params = new URLSearchParams(window.location.search);
-const type = params.get("type");
-const subject = params.get("subject");
+const params=new URLSearchParams(window.location.search)
 
-const user = JSON.parse(localStorage.getItem("user"));
+const subject=params.get("subject")
+const type=params.get("type")
+const year=params.get("year")
+const semester=params.get("semester")
+
+const user=JSON.parse(localStorage.getItem("user"))
 
 if(!user){
-    window.location.href = "login.html";
+window.location.href="login.html"
 }
 
-const pageTitle = document.getElementById("pageTitle");
-const container = document.getElementById("contentContainer");
+const pageTitle=document.getElementById("pageTitle")
+const container=document.getElementById("contentContainer")
 
-pageTitle.innerText = (subject || "") + " - " + (type ? type.toUpperCase() : "");
+pageTitle.innerText=`${subject} - ${type.toUpperCase()}`
 
-// ================= FILE DATA =================
-const fileData = {
 
-"DBMS":{
-study:["2ndYear/SEM3/dbms_studymaterial.pdf"],
-notes:["2ndYear/SEM3/dbms_studymaterial.pdf"],
-pyq:["2ndYear/SEM3/dbms_studymaterial.pdf"],
-yt:"https://youtube.com/playlist?list=PLxCzCOWd7aiFAN6I8CuViBuCdJgiOkT2Y"
-},
+// ================= LOAD FILES =================
 
-"AOA":{
-study:["2ndYear/SEM3/aoa_studymaterial.pdf"],
-notes:[],
-pyq:[],
-yt:"https://youtube.com/playlist?list=PLxCzCOWd7aiHcmS4i14bI0VrMbZTUvlTa"
-},
+async function loadFiles(){
 
-"OOP":{
-study:["2ndYear/SEM3/oop_studymaterial.pdf"],
-notes:["2ndYear/SEM3/oop_studymaterial.pdf"],
-pyq:["2ndYear/SEM3/oop_studymaterial.pdf"],
-yt:"https://youtube.com/playlist?list=PLsyeobzWxl7oa1WO9n4cP3OY9nOtUcZIg"
-},
+try{
 
-"EVS":{
-study:["2ndYear/SEM3/evs_studymaterial.pdf"],
-notes:[],
-pyq:[],
-yt:"https://youtube.com/playlist?list=PL3qvHcrYGy1u2egw2tipHWODV6elVC2Gg"
-},
+const res=await fetch(
+`${API_BASE}/materials?year=${year}&semester=${semester}&subject=${subject}&type=${type}`
+)
 
-"SEPM":{
-study:["2ndYear/SEM4/sepm_studymaterial.pdf"],
-notes:["2ndYear/SEM4/sepm_studymaterial.pdf"],
-pyq:["2ndYear/SEM4/sepm_studymaterial.pdf"],
-yt:"https://youtube.com/playlist?list=PLxCzCOWd7aiEed7SKZBnC6ypFDWYLRvB2"
-},
+const data=await res.json()
 
-"MAM":{
-study:["2ndYear/SEM4/mam_studymaterial.pdf"],
-notes:[],
-pyq:[],
-yt:"https://youtube.com/playlist?list=PLxCzCOWd7aiHL7mF_dRsj4Q9x1NNaZqkh"
-},
+container.innerHTML=""
 
-"DT":{
-study:["2ndYear/SEM4/dt_studymaterial.pdf"],
-notes:["2ndYear/SEM4/dt_studymaterial.pdf"],
-pyq:["2ndYear/SEM4/dt_studymaterial.pdf"],
-yt:"https://youtube.com/playlist?list=PLsh2FvSr3n7ctIa1TY50t5jP7_gLmfgvE"
-},
+if(data.length===0){
 
-"MDM-info-sec":{
-study:["2ndYear/SEM4/mdmis_studymaterial.pdf"],
-notes:[],
-pyq:[],
-yt:"https://youtube.com/playlist?list=PLBlnK6fEyqRgJU3EsOYDTW7m6SUmW6kII"
+container.innerHTML="<p class='text-center'>No files available yet.</p>"
+return
+
 }
 
-};
+data.forEach(item=>{
 
-
-// ================= MAIN LOGIC =================
-
-if(fileData[subject]){
+const card=document.createElement("div")
+card.className="card p-6"
 
 if(type==="yt"){
 
-const btn=document.createElement("a");
+card.innerHTML=`
 
-btn.href=fileData[subject].yt;
-btn.target="_blank";
-btn.className="gold-btn p-4 rounded-xl text-white text-center";
-btn.innerText="Open YouTube Playlist";
+<a href="${item.yt_link}" 
+target="_blank"
+class="gold-btn px-6 py-3 text-white rounded-xl">
 
-container.appendChild(btn);
+Open YouTube Playlist
 
-}else{
+</a>
 
-const files=fileData[subject][type];
-
-if(!files || files.length===0){
-
-container.innerHTML="<p>No files available yet.</p>";
+`
 
 }else{
 
-files.forEach(file=>{
-
-const fullPath=`${API_BASE}/files/${file}`;
-const fileName=file.split("/").pop();
-
-const card=document.createElement("div");
-card.className="card p-6";
+const fileURL=`${API_BASE}/files/${item.file_path.replace("uploads/","")}`
 
 card.innerHTML=`
 
-<p class="mb-4 font-semibold">${fileName}</p>
+<p class="mb-4 font-semibold">${item.title || item.file_name}</p>
 
 <div class="flex gap-4">
 
-<a href="${fullPath}" 
+<a href="${fileURL}"
 target="_blank"
 class="gold-btn px-4 py-2 rounded-xl text-white">
+
 View
+
 </a>
 
-<a href="${fullPath}" 
+<a href="${fileURL}"
 download
-onclick="trackDownload('${subject}','${fileName}','${type}','${fullPath}')"
+onclick="trackDownload('${subject}','${item.file_name}','${type}','${fileURL}')"
 class="bg-black px-4 py-2 rounded-xl text-white">
+
 Download
+
 </a>
 
 </div>
 
-`;
+`
 
-container.appendChild(card);
+}
 
-});
+container.appendChild(card)
+
+})
+
+}catch(err){
+
+container.innerHTML="<p class='text-center'>Error loading files</p>"
 
 }
 
 }
 
-}
+loadFiles()
 
 
-// ================= TRACK DOWNLOAD =================
+// ================= DOWNLOAD TRACK =================
 
 async function trackDownload(subject,fileName,type,filePath){
 
@@ -200,11 +163,11 @@ file_path:filePath
 
 })
 
-});
+})
 
 }catch(err){
 
-console.log("Download track error");
+console.log("Download track error")
 
 }
 

@@ -1,19 +1,19 @@
 // ================= LOAD ENV =================
-require("dotenv").config();
+require("dotenv").config()
 
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-const bcrypt = require("bcrypt");
-const multer = require("multer");
-const fs = require("fs");
-const db = require("./db");
+const express = require("express")
+const cors = require("cors")
+const path = require("path")
+const bcrypt = require("bcrypt")
+const multer = require("multer")
+const fs = require("fs")
+const db = require("./db")
 
-const app = express();
+const app = express()
 
 // ================= ADMIN LOGIN =================
-const ADMIN_USERNAME = "ritik030";
-const ADMIN_PASSWORD = "ritikgn030";
+const ADMIN_USERNAME="ritik030"
+const ADMIN_PASSWORD="ritikgn030"
 
 // ================= CORS =================
 app.use(cors({
@@ -23,12 +23,12 @@ origin:[
 "http://localhost:5000"
 ],
 credentials:true
-}));
+}))
 
-app.use(express.json());
+app.use(express.json())
 
 // ================= FILE STORAGE =================
-const storage = multer.diskStorage({
+const storage=multer.diskStorage({
 
 destination:(req,file,cb)=>{
 cb(null,"uploads/")
@@ -38,70 +38,67 @@ filename:(req,file,cb)=>{
 cb(null,Date.now()+"_"+file.originalname)
 }
 
-});
+})
 
-const upload = multer({storage});
+const upload=multer({storage})
 
 // ================= SERVE FILES =================
-const uploadsPath = path.join(__dirname,"uploads");
-app.use("/files",express.static(uploadsPath));
-
-console.log("Uploads Path:",uploadsPath);
+const uploadsPath=path.join(__dirname,"uploads")
+app.use("/files",express.static(uploadsPath))
 
 // ================= ROOT =================
 app.get("/",(req,res)=>{
-res.send("GoldNotes Backend Running 🚀");
-});
+res.send("GoldNotes Backend Running 🚀")
+})
 
 // ================= REGISTER =================
 app.post("/register",async(req,res)=>{
 
-const {first_name,last_name,gender,dob,year,username,password}=req.body;
+const {first_name,last_name,gender,dob,year,username,password}=req.body
 
 if(!first_name||!last_name||!gender||!dob||!year||!username||!password){
-return res.status(400).json({message:"All fields required"});
+return res.status(400).json({message:"All fields required"})
 }
 
 try{
 
-const hashedPassword=await bcrypt.hash(password,10);
+const hashedPassword=await bcrypt.hash(password,10)
 
 const sql=`
 INSERT INTO users
 (first_name,last_name,gender,dob,year,username,password)
 VALUES(?,?,?,?,?,?,?)
-`;
+`
 
 db.query(sql,
 [first_name,last_name,gender,dob,year,username,hashedPassword],
 (err)=>{
 
 if(err){
-return res.status(400).json({message:"Username exists"});
+return res.status(400).json({message:"Username exists"})
 }
 
-res.json({message:"User Registered Successfully"});
-});
+res.json({message:"User Registered Successfully"})
+})
 
 }catch(err){
 
-res.status(500).json({message:"Server Error"});
+res.status(500).json({message:"Server Error"})
 
 }
 
-});
+})
 
 // ================= LOGIN =================
 app.post("/login",(req,res)=>{
 
-const {username,password}=req.body;
+const {username,password}=req.body
 
 if(!username||!password){
-return res.status(400).json({message:"All fields required"});
+return res.status(400).json({message:"All fields required"})
 }
 
 // ADMIN LOGIN
-
 if(username===ADMIN_USERNAME && password===ADMIN_PASSWORD){
 
 return res.json({
@@ -111,28 +108,28 @@ id:0,
 username:"ritik030",
 role:"admin"
 }
-});
+})
 
 }
 
-const sql="SELECT * FROM users WHERE username=?";
+const sql="SELECT * FROM users WHERE username=?"
 
 db.query(sql,[username],async(err,result)=>{
 
 if(err){
-return res.status(500).json({message:"Server Error"});
+return res.status(500).json({message:"Server Error"})
 }
 
 if(result.length===0){
-return res.status(404).json({message:"User Not Found"});
+return res.status(404).json({message:"User Not Found"})
 }
 
-const user=result[0];
+const user=result[0]
 
-const match=await bcrypt.compare(password,user.password);
+const match=await bcrypt.compare(password,user.password)
 
 if(!match){
-return res.status(400).json({message:"Invalid Password"});
+return res.status(400).json({message:"Invalid Password"})
 }
 
 res.json({
@@ -147,110 +144,147 @@ dob:user.dob,
 year:user.year,
 role:"user"
 }
-});
+})
 
-});
+})
 
-});
+})
 
 // ================= ADMIN UPLOAD =================
 app.post("/admin/upload",upload.single("pdf"),(req,res)=>{
 
-const {year,semester,subject,type}=req.body;
+const {year,semester,subject,type,title}=req.body
 
 if(!req.file){
-return res.status(400).json({message:"No file uploaded"});
+return res.status(400).json({message:"No file uploaded"})
 }
 
-const folder=`uploads/${year}/${semester}`;
+const folder=`uploads/${year}/${semester}`
 
 if(!fs.existsSync(folder)){
-fs.mkdirSync(folder,{recursive:true});
+fs.mkdirSync(folder,{recursive:true})
 }
 
-const filename=`${subject}_${type}.pdf`;
+const filename=Date.now()+"_"+req.file.originalname
 
-const newPath=`${folder}/${filename}`;
+const newPath=`${folder}/${filename}`
 
-fs.renameSync(req.file.path,newPath);
+fs.renameSync(req.file.path,newPath)
 
-res.json({
-message:"File uploaded successfully",
-file:newPath
-});
+const sql=`
+INSERT INTO materials
+(year,semester,subject,type,title,file_path)
+VALUES(?,?,?,?,?,?)
+`
 
-});
+db.query(sql,
+[year,semester,subject,type,title,newPath],
+(err)=>{
 
-// ================= ADMIN REPLACE =================
-app.post("/admin/replace",upload.single("pdf"),(req,res)=>{
-
-const {year,semester,subject,type}=req.body;
-
-const folder=`uploads/${year}/${semester}`;
-
-if(!fs.existsSync(folder)){
-fs.mkdirSync(folder,{recursive:true});
+if(err){
+return res.status(500).json({message:"DB Save Failed"})
 }
 
-const filename=`${subject}_${type}.pdf`;
+res.json({message:"File uploaded successfully"})
 
-const filePath=`${folder}/${filename}`;
+})
 
-fs.renameSync(req.file.path,filePath);
+})
 
-res.json({
-message:"File replaced successfully"
-});
+// ================= FETCH MATERIALS =================
+app.get("/materials",(req,res)=>{
 
-});
+const {year,semester,subject,type}=req.query
 
-// ================= ADMIN DELETE =================
+const sql=`
+SELECT * FROM materials
+WHERE year=? AND semester=? AND subject=? AND type=?
+`
+
+db.query(sql,
+[year,semester,subject,type],
+(err,result)=>{
+
+if(err){
+return res.status(500).json({message:"Fetch error"})
+}
+
+res.json(result)
+
+})
+
+})
+
+// ================= ADD YT PLAYLIST =================
+app.post("/admin/add-yt",(req,res)=>{
+
+const {year,semester,subject,link}=req.body
+
+const sql=`
+INSERT INTO materials
+(year,semester,subject,type,yt_link)
+VALUES(?,?,?,'yt',?)
+`
+
+db.query(sql,
+[year,semester,subject,link],
+(err)=>{
+
+if(err){
+return res.status(500).json({message:"YT Add Failed"})
+}
+
+res.json({message:"YT Playlist Added"})
+
+})
+
+})
+
+// ================= DELETE MATERIAL =================
 app.delete("/admin/delete",(req,res)=>{
 
-const {year,semester,filename}=req.body;
+const {id}=req.body
 
-const filePath=`uploads/${year}/${semester}/${filename}`;
+const sql="DELETE FROM materials WHERE id=?"
 
-if(fs.existsSync(filePath)){
+db.query(sql,[id],(err)=>{
 
-fs.unlinkSync(filePath);
-
-res.json({message:"File deleted successfully"});
-
-}else{
-
-res.status(404).json({message:"File not found"});
-
+if(err){
+return res.status(500).json({message:"Delete Failed"})
 }
 
-});
+res.json({message:"Material Deleted"})
+
+})
+
+})
 
 // ================= DOWNLOAD TRACK =================
 app.post("/download",(req,res)=>{
 
-const {user_id,subject,file_name,year,semester,type,file_path}=req.body;
+const {user_id,subject,file_name,year,semester,type,file_path}=req.body
 
 const sql=`
 INSERT INTO downloads
 (user_id,subject,file_name,year,semester,type,file_path)
 VALUES(?,?,?,?,?,?,?)
-`;
+`
 
 db.query(sql,
 [user_id,subject,file_name,year||null,semester||null,type||null,file_path||null],
 (err)=>{
 
 if(err){
-return res.status(500).json({message:"Download Failed"});
+return res.status(500).json({message:"Download Failed"})
 }
 
-res.json({message:"Download Recorded"});
+res.json({message:"Download Recorded"})
 
-});
+})
 
-});
+})
 
-// ================= DOWNLOAD ANALYTICS =================
+// ================= ANALYTICS =================
 app.get("/admin/analytics",(req,res)=>{
 
 const sql=`
@@ -258,50 +292,50 @@ SELECT file_name,COUNT(*) AS downloads
 FROM downloads
 GROUP BY file_name
 ORDER BY downloads DESC
-`;
+`
 
 db.query(sql,(err,result)=>{
 
 if(err){
-return res.status(500).json({message:"Analytics Error"});
+return res.status(500).json({message:"Analytics Error"})
 }
 
-res.json(result);
+res.json(result)
 
-});
+})
 
-});
+})
 
 // ================= VOTE =================
 app.post("/vote",(req,res)=>{
 
-const {user_id,subject}=req.body;
+const {user_id,subject}=req.body
 
 const sql=`
 INSERT INTO votes (user_id,subject)
 VALUES (?,?)
-`;
+`
 
 db.query(sql,[user_id,subject],(err)=>{
 
 if(err){
-return res.status(400).json({message:"Already Voted"});
+return res.status(400).json({message:"Already Voted"})
 }
 
-res.json({message:"Vote Added"});
+res.json({message:"Vote Added"})
 
-});
+})
 
-});
+})
 
 // ================= ERROR =================
 app.use((req,res)=>{
-res.status(404).json({message:"Route Not Found"});
-});
+res.status(404).json({message:"Route Not Found"})
+})
 
 // ================= SERVER =================
-const PORT = process.env.PORT || 5000;
+const PORT=process.env.PORT||5000
 
 app.listen(PORT,"0.0.0.0",()=>{
-console.log(`🚀 Server running on port ${PORT}`);
-});
+console.log(`🚀 Server running on port ${PORT}`)
+})
