@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<title>Admin Panel - GoldNotes</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body{
+background:linear-gradient(to bottom,#f8f6f2,#f3efe7);
+}
+.card{
+background:white;
+border-radius:20px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+.gold-btn{
+background:linear-gradient(90deg,#d4af37,#f5d76e);
+}
+</style>
+
+</head>
+
+<body class="p-10">
+
+<h1 class="text-3xl font-bold text-center text-yellow-700 mb-10">
+GoldNotes Admin Panel
+</h1>
+
+<div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+
+<!-- UPLOAD NOTES -->
+<div class="card p-6">
+
+<h2 class="text-xl font-semibold mb-4">
+Upload Notes
+</h2>
+
+<input id="subject"
+placeholder="Subject"
+class="w-full border p-2 rounded mb-3">
+
+<select id="type"
+class="w-full border p-2 rounded mb-3">
+
+<option value="study">Study Material</option>
+<option value="notes">Important Notes</option>
+<option value="pyq">PYQ</option>
+
+</select>
+
+<input type="file" id="pdfFile"
+class="mb-4">
+
+<button onclick="uploadNote()"
+class="gold-btn text-white px-4 py-2 rounded">
+Upload
+</button>
+
+<p id="uploadMsg" class="mt-3 text-sm"></p>
+
+</div>
+
+<!-- DELETE NOTES -->
+<div class="card p-6">
+
+<h2 class="text-xl font-semibold mb-4">
+Delete Notes
+</h2>
+
+<input id="deleteFile"
+placeholder="File name (example.pdf)"
+class="w-full border p-2 rounded mb-4">
+
+<button onclick="deleteNote()"
+class="bg-red-500 text-white px-4 py-2 rounded">
+Delete File
+</button>
+
+<p id="deleteMsg" class="mt-3 text-sm"></p>
+
+</div>
+
+</div>
+
+
+<!-- ANALYTICS -->
+
+<div class="card p-6 max-w-5xl mx-auto mt-10">
+
+<h2 class="text-xl font-semibold mb-4">
+Download Analytics
+</h2>
+
+<button onclick="loadAnalytics()"
+class="gold-btn text-white px-4 py-2 rounded mb-4">
+Load Analytics
+</button>
+
+<div id="analytics"></div>
+
+</div>
+
+
+<script>
+
+const API="https://goldnotes-backend.onrender.com";
+
+const user=JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.username!=="ritik030"){
+alert("Access Denied");
+window.location.href="/dashboard.html";
+}
+
+// ================= UPLOAD =================
+
+async function uploadNote(){
+
+const subject=document.getElementById("subject").value;
+const type=document.getElementById("type").value;
+const file=document.getElementById("pdfFile").files[0];
+
+if(!file){
+alert("Select PDF");
+return;
+}
+
+const formData=new FormData();
+
+formData.append("pdf",file);
+formData.append("subject",subject);
+formData.append("type",type);
+
+const res=await fetch(`${API}/admin/upload`,{
+method:"POST",
+body:formData
+});
+
+const data=await res.json();
+
+document.getElementById("uploadMsg").innerText=data.message;
+
+}
+
+// ================= DELETE =================
+
+async function deleteNote(){
+
+const filename=document.getElementById("deleteFile").value;
+
+const res=await fetch(`${API}/admin/delete`,{
+
+method:"DELETE",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+filename:filename
+})
+
+});
+
+const data=await res.json();
+
+document.getElementById("deleteMsg").innerText=data.message;
+
+}
+
+// ================= ANALYTICS =================
+
+async function loadAnalytics(){
+
+const res=await fetch(`${API}/admin/analytics`);
+
+const data=await res.json();
+
+const div=document.getElementById("analytics");
+
+div.innerHTML="";
+
+data.forEach(item=>{
+
+const row=document.createElement("div");
+
+row.className="border-b p-2";
+
+row.innerText=`${item.file_name} — ${item.downloads} downloads`;
+
+div.appendChild(row);
+
+});
+
+}
+
+</script>
+
+</body>
+</html>

@@ -8,21 +8,21 @@
 
 <style>
 body{
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(to bottom,#f8f6f2,#f3efe7);
+font-family: 'Poppins', sans-serif;
+background: linear-gradient(to bottom,#f8f6f2,#f3efe7);
 }
 .card{
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+background:white;
+border-radius:20px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
 }
 @keyframes blink {
-    0% { opacity: 1; }
-    50% { opacity: 0.4; }
-    100% { opacity: 1; }
+0% {opacity:1;}
+50% {opacity:0.4;}
+100% {opacity:1;}
 }
-.blink {
-    animation: blink 1.5s infinite;
+.blink{
+animation:blink 1.5s infinite;
 }
 </style>
 </head>
@@ -32,189 +32,221 @@ body{
 <!-- HEADER -->
 <header class="bg-white shadow-md p-4 flex items-center justify-between">
 
-    <!-- Logo -->
-    <div class="flex items-center gap-3">
-        <img src="assets/logo.png" class="w-10">
-        <span class="text-xl font-bold text-yellow-700">GoldNotes</span>
-    </div>
+<div class="flex items-center gap-3">
+<img src="assets/logo.png" class="w-10">
+<span class="text-xl font-bold text-yellow-700">GoldNotes</span>
+</div>
 
-    <!-- SEARCH -->
-    <div class="hidden md:flex w-1/3 relative">
-        <input id="searchInput" type="text"
-        placeholder="Search semester or subject..."
-        class="w-full p-2 rounded-xl border">
+<div class="hidden md:flex w-1/3 relative">
+<input id="searchInput" type="text"
+placeholder="Search semester or subject..."
+class="w-full p-2 rounded-xl border">
 
-        <div id="searchResults"
-        class="absolute top-10 w-full bg-white shadow-lg rounded-xl hidden z-50 max-h-60 overflow-y-auto">
-        </div>
-    </div>
+<div id="searchResults"
+class="absolute top-10 w-full bg-white shadow-lg rounded-xl hidden z-50 max-h-60 overflow-y-auto">
+</div>
+</div>
 
-    <!-- USER + MENU -->
-    <div class="flex items-center gap-4">
-        <span id="usernameDisplay" class="font-semibold text-gray-700"></span>
+<div class="flex items-center gap-4">
+<span id="usernameDisplay" class="font-semibold text-gray-700"></span>
 
-        <button onclick="toggleMenu()" class="text-2xl">
-            ☰
-        </button>
-    </div>
+<button onclick="toggleMenu()" class="text-2xl">
+☰
+</button>
+</div>
 </header>
 
 <!-- SIDE MENU -->
 <div id="sideMenu" class="hidden fixed right-0 top-0 h-full w-64 bg-white shadow-xl p-6 z-50">
-    <button onclick="toggleMenu()" class="text-right w-full mb-6 text-xl">✖</button>
-    <ul class="space-y-4">
-        <li><a href="/profile.html" onclick="closeMenu()">Profile</a></li>
-        <li><a href="/mydownloads.html" onclick="closeMenu()">My Downloads</a></li>
-        <li><a href="/index.html">Logout</a></li>
-    </ul>
+
+<button onclick="toggleMenu()" class="text-right w-full mb-6 text-xl">✖</button>
+
+<ul class="space-y-4">
+
+<li><a href="/profile.html" onclick="closeMenu()">Profile</a></li>
+
+<li><a href="/mydownloads.html" onclick="closeMenu()">My Downloads</a></li>
+
+<!-- ADMIN PANEL -->
+<li id="adminMenu" class="hidden">
+<a href="/admin-panel.html" onclick="closeMenu()">Admin Panel</a>
+</li>
+
+<li><a href="/index.html">Logout</a></li>
+
+</ul>
+
 </div>
 
 <!-- MAIN -->
 <section class="text-center mt-10 px-4">
 
-    <h1 class="text-4xl font-bold text-gray-700 blink">
-        Mumbai University
-    </h1>
-    <h2 class="text-3xl font-bold text-yellow-700 mt-2">
-        GoldNotes
-    </h2>
+<h1 class="text-4xl font-bold text-gray-700 blink">
+Mumbai University
+</h1>
 
-    <!-- Year Selection -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-10">
+<h2 class="text-3xl font-bold text-yellow-700 mt-2">
+GoldNotes
+</h2>
 
-        <a href="/semester.html?year=1" class="card p-6 hover:scale-105 transition">
-            <h3 class="text-xl font-semibold">1st Year</h3>
-        </a>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-10">
 
-        <a href="/semester.html?year=2" class="card p-6 hover:scale-105 transition">
-            <h3 class="text-xl font-semibold">2nd Year</h3>
-        </a>
+<a href="/semester.html?year=1" class="card p-6 hover:scale-105 transition">
+<h3 class="text-xl font-semibold">1st Year</h3>
+</a>
 
-        <a href="/semester.html?year=3" class="card p-6 hover:scale-105 transition">
-            <h3 class="text-xl font-semibold">3rd Year</h3>
-        </a>
+<a href="/semester.html?year=2" class="card p-6 hover:scale-105 transition">
+<h3 class="text-xl font-semibold">2nd Year</h3>
+</a>
 
-        <a href="/semester.html?year=4" class="card p-6 hover:scale-105 transition">
-            <h3 class="text-xl font-semibold">4th Year</h3>
-        </a>
+<a href="/semester.html?year=3" class="card p-6 hover:scale-105 transition">
+<h3 class="text-xl font-semibold">3rd Year</h3>
+</a>
 
-    </div>
+<a href="/semester.html?year=4" class="card p-6 hover:scale-105 transition">
+<h3 class="text-xl font-semibold">4th Year</h3>
+</a>
+
+</div>
 </section>
 
 <section class="mt-16 px-6 max-w-6xl mx-auto">
 
-    <h2 class="text-2xl font-bold text-center mb-8 text-gray-700">
-        Student Problems & Our Smart Solution
-    </h2>
+<h2 class="text-2xl font-bold text-center mb-8 text-gray-700">
+Student Problems & Our Smart Solution
+</h2>
 
-    <div class="grid md:grid-cols-2 gap-10">
+<div class="grid md:grid-cols-2 gap-10">
 
-        <div class="card p-6">
-            <img src="assets/problem.jpg" class="rounded-xl mb-4 w-full object-cover">
-            <h3 class="text-xl font-semibold text-red-600 mb-2">
-                Problem Faced by Students
-            </h3>
-            <p class="text-gray-600 text-sm">
-                Students struggle to find proper notes, PYQs, important questions
-                and study materials from multiple platforms like WhatsApp,
-                random websites and libraries. This wastes time and creates confusion
-                especially during exams.
-            </p>
-        </div>
+<div class="card p-6">
 
-        <div class="card p-6">
-            <img src="assets/solution.jpg" class="rounded-xl mb-4 w-full object-cover">
-            <h3 class="text-xl font-semibold text-green-600 mb-2">
-                Our Solution - GoldNotes
-            </h3>
-            <p class="text-gray-600 text-sm">
-                GoldNotes provides a centralized platform where students
-                can download organized notes, PYQs and important study material
-                in just one click. Everything is structured year-wise and subject-wise,
-                saving time and improving exam preparation.
-            </p>
-        </div>
+<img src="assets/problem.jpg" class="rounded-xl mb-4 w-full object-cover">
 
-    </div>
+<h3 class="text-xl font-semibold text-red-600 mb-2">
+Problem Faced by Students
+</h3>
+
+<p class="text-gray-600 text-sm">
+Students struggle to find proper notes, PYQs, important questions
+and study materials from multiple platforms like WhatsApp,
+random websites and libraries.
+</p>
+
+</div>
+
+<div class="card p-6">
+
+<img src="assets/solution.jpg" class="rounded-xl mb-4 w-full object-cover">
+
+<h3 class="text-xl font-semibold text-green-600 mb-2">
+Our Solution - GoldNotes
+</h3>
+
+<p class="text-gray-600 text-sm">
+GoldNotes provides a centralized platform where students
+can download organized notes, PYQs and important study material
+in just one click.
+</p>
+
+</div>
+
+</div>
 
 </section>
 
 <footer class="text-center mt-16 mb-6 text-gray-600 text-sm">
-    Developed by Team Hackverse - Ritik Pandey (Computer)
+Developed by Team Hackverse - Ritik Pandey
 </footer>
 
 <script>
 
 // USER CHECK
 const user = JSON.parse(localStorage.getItem("user"));
+
 if(!user){
-    window.location.href = "/login.html";
-} else {
-    document.getElementById("usernameDisplay").innerText = "👤 " + user.username;
+window.location.href="/login.html";
+}else{
+
+document.getElementById("usernameDisplay").innerText="👤 "+user.username;
+
+// ADMIN DETECT
+if(user.username==="ritik030"){
+document.getElementById("adminMenu").classList.remove("hidden");
+}
+
 }
 
 // MENU
 function toggleMenu(){
-    document.getElementById("sideMenu").classList.toggle("hidden");
+document.getElementById("sideMenu").classList.toggle("hidden");
 }
+
 function closeMenu(){
-    document.getElementById("sideMenu").classList.add("hidden");
+document.getElementById("sideMenu").classList.add("hidden");
 }
 
 // SEARCH DATA
-const searchData = [
-    { name: "SEM 1", link: "/subjects.html?sem=1" },
-    { name: "SEM 2", link: "/subjects.html?sem=2" },
-    { name: "SEM 3", link: "/subjects.html?sem=3" },
-    { name: "SEM 4", link: "/subjects.html?sem=4" },
+const searchData=[
 
-    { name: "DBMS", link: "/materials.html?subject=DBMS" },
-    { name: "AOA", link: "/materials.html?subject=AOA" },
-    { name: "EVS", link: "/materials.html?subject=EVS" },
-    { name: "OOP", link: "/materials.html?subject=OOP" }
+{name:"SEM 1",link:"/subjects.html?sem=1"},
+{name:"SEM 2",link:"/subjects.html?sem=2"},
+{name:"SEM 3",link:"/subjects.html?sem=3"},
+{name:"SEM 4",link:"/subjects.html?sem=4"},
+
+{name:"DBMS",link:"/materials.html?subject=DBMS"},
+{name:"AOA",link:"/materials.html?subject=AOA"},
+{name:"EVS",link:"/materials.html?subject=EVS"},
+{name:"OOP",link:"/materials.html?subject=OOP"}
+
 ];
 
-const searchInput = document.getElementById("searchInput");
-const searchResults = document.getElementById("searchResults");
+const searchInput=document.getElementById("searchInput");
+const searchResults=document.getElementById("searchResults");
 
-searchInput.addEventListener("input", function(){
-    const value = this.value.toLowerCase();
-    searchResults.innerHTML = "";
+searchInput.addEventListener("input",function(){
 
-    if(value === ""){
-        searchResults.classList.add("hidden");
-        return;
-    }
+const value=this.value.toLowerCase();
+searchResults.innerHTML="";
 
-    const filtered = searchData.filter(item =>
-        item.name.toLowerCase().includes(value)
-    );
+if(value===""){
+searchResults.classList.add("hidden");
+return;
+}
 
-    if(filtered.length === 0){
-        searchResults.classList.add("hidden");
-        return;
-    }
+const filtered=searchData.filter(item =>
+item.name.toLowerCase().includes(value)
+);
 
-    filtered.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "p-3 hover:bg-yellow-100 cursor-pointer border-b";
-        div.innerText = item.name;
+if(filtered.length===0){
+searchResults.classList.add("hidden");
+return;
+}
 
-        div.onclick = () => {
-            window.location.href = item.link;
-        };
+filtered.forEach(item=>{
 
-        searchResults.appendChild(div);
-    });
+const div=document.createElement("div");
 
-    searchResults.classList.remove("hidden");
+div.className="p-3 hover:bg-yellow-100 cursor-pointer border-b";
+div.innerText=item.name;
+
+div.onclick=()=>{
+window.location.href=item.link;
+};
+
+searchResults.appendChild(div);
+
 });
 
-// Hide dropdown outside click
-document.addEventListener("click", function(e){
-    if(!searchInput.contains(e.target) && !searchResults.contains(e.target)){
-        searchResults.classList.add("hidden");
-    }
+searchResults.classList.remove("hidden");
+
+});
+
+document.addEventListener("click",function(e){
+
+if(!searchInput.contains(e.target) && !searchResults.contains(e.target)){
+searchResults.classList.add("hidden");
+}
+
 });
 
 </script>
