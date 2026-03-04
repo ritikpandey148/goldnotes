@@ -31,51 +31,84 @@ GoldNotes Admin Panel
 
 <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
 
-<!-- UPLOAD NOTES -->
+<!-- ================= UPLOAD / REPLACE ================= -->
+
 <div class="card p-6">
 
 <h2 class="text-xl font-semibold mb-4">
-Upload Notes
+Upload / Replace Notes
 </h2>
 
-<input id="subject"
-placeholder="Subject"
-class="w-full border p-2 rounded mb-3">
-
-<select id="type"
-class="w-full border p-2 rounded mb-3">
-
-<option value="study">Study Material</option>
-<option value="notes">Important Notes</option>
-<option value="pyq">PYQ</option>
-
+<select id="year" class="w-full border p-2 rounded mb-3">
+<option value="1stYear">1st Year</option>
+<option value="2ndYear">2nd Year</option>
+<option value="3rdYear">3rd Year</option>
+<option value="4thYear">4th Year</option>
 </select>
 
-<input type="file" id="pdfFile"
-class="mb-4">
+<select id="semester" class="w-full border p-2 rounded mb-3">
+<option value="SEM1">SEM1</option>
+<option value="SEM2">SEM2</option>
+<option value="SEM3">SEM3</option>
+<option value="SEM4">SEM4</option>
+<option value="SEM5">SEM5</option>
+<option value="SEM6">SEM6</option>
+<option value="SEM7">SEM7</option>
+<option value="SEM8">SEM8</option>
+</select>
+
+<input id="subject"
+placeholder="Subject Name (Example: DBMS)"
+class="w-full border p-2 rounded mb-3">
+
+<select id="type" class="w-full border p-2 rounded mb-3">
+<option value="studymaterial">Study Material</option>
+<option value="notes">Important Notes</option>
+<option value="pyq">PYQ</option>
+</select>
+
+<input type="file" id="pdfFile" class="mb-4">
+
+<div class="flex gap-4">
 
 <button onclick="uploadNote()"
 class="gold-btn text-white px-4 py-2 rounded">
 Upload
 </button>
 
+<button onclick="replaceNote()"
+class="bg-yellow-600 text-white px-4 py-2 rounded">
+Replace
+</button>
+
+</div>
+
 <p id="uploadMsg" class="mt-3 text-sm"></p>
 
 </div>
 
-<!-- DELETE NOTES -->
+<!-- ================= DELETE ================= -->
+
 <div class="card p-6">
 
 <h2 class="text-xl font-semibold mb-4">
 Delete Notes
 </h2>
 
+<input id="deleteYear"
+placeholder="Year (Example: 2ndYear)"
+class="w-full border p-2 rounded mb-3">
+
+<input id="deleteSem"
+placeholder="Semester (Example: SEM3)"
+class="w-full border p-2 rounded mb-3">
+
 <input id="deleteFile"
-placeholder="File name (example.pdf)"
+placeholder="File name (Example: DBMS_notes.pdf)"
 class="w-full border p-2 rounded mb-4">
 
 <button onclick="deleteNote()"
-class="bg-red-500 text-white px-4 py-2 rounded">
+class="bg-red-600 text-white px-4 py-2 rounded">
 Delete File
 </button>
 
@@ -85,8 +118,7 @@ Delete File
 
 </div>
 
-
-<!-- ANALYTICS -->
+<!-- ================= ANALYTICS ================= -->
 
 <div class="card p-6 max-w-5xl mx-auto mt-10">
 
@@ -103,53 +135,66 @@ Load Analytics
 
 </div>
 
-
 <script>
 
-const API="https://goldnotes-backend.onrender.com";
+const API="https://goldnotes-backend.onrender.com"
 
-const user=JSON.parse(localStorage.getItem("user"));
+const user=JSON.parse(localStorage.getItem("user"))
 
 if(!user || user.username!=="ritik030"){
-alert("Access Denied");
-window.location.href="/dashboard.html";
+alert("Access Denied")
+window.location.href="/dashboard.html"
 }
 
 // ================= UPLOAD =================
 
 async function uploadNote(){
 
-const subject=document.getElementById("subject").value;
-const type=document.getElementById("type").value;
-const file=document.getElementById("pdfFile").files[0];
+const form=new FormData()
 
-if(!file){
-alert("Select PDF");
-return;
-}
-
-const formData=new FormData();
-
-formData.append("pdf",file);
-formData.append("subject",subject);
-formData.append("type",type);
+form.append("year",document.getElementById("year").value)
+form.append("semester",document.getElementById("semester").value)
+form.append("subject",document.getElementById("subject").value)
+form.append("type",document.getElementById("type").value)
+form.append("pdf",document.getElementById("pdfFile").files[0])
 
 const res=await fetch(`${API}/admin/upload`,{
 method:"POST",
-body:formData
-});
+body:form
+})
 
-const data=await res.json();
+const data=await res.json()
 
-document.getElementById("uploadMsg").innerText=data.message;
+document.getElementById("uploadMsg").innerText=data.message
+
+}
+
+// ================= REPLACE =================
+
+async function replaceNote(){
+
+const form=new FormData()
+
+form.append("year",document.getElementById("year").value)
+form.append("semester",document.getElementById("semester").value)
+form.append("subject",document.getElementById("subject").value)
+form.append("type",document.getElementById("type").value)
+form.append("pdf",document.getElementById("pdfFile").files[0])
+
+const res=await fetch(`${API}/admin/replace`,{
+method:"POST",
+body:form
+})
+
+const data=await res.json()
+
+document.getElementById("uploadMsg").innerText=data.message
 
 }
 
 // ================= DELETE =================
 
 async function deleteNote(){
-
-const filename=document.getElementById("deleteFile").value;
 
 const res=await fetch(`${API}/admin/delete`,{
 
@@ -160,14 +205,18 @@ headers:{
 },
 
 body:JSON.stringify({
-filename:filename
+
+year:document.getElementById("deleteYear").value,
+semester:document.getElementById("deleteSem").value,
+filename:document.getElementById("deleteFile").value
+
 })
 
-});
+})
 
-const data=await res.json();
+const data=await res.json()
 
-document.getElementById("deleteMsg").innerText=data.message;
+document.getElementById("deleteMsg").innerText=data.message
 
 }
 
@@ -175,25 +224,25 @@ document.getElementById("deleteMsg").innerText=data.message;
 
 async function loadAnalytics(){
 
-const res=await fetch(`${API}/admin/analytics`);
+const res=await fetch(`${API}/admin/analytics`)
 
-const data=await res.json();
+const data=await res.json()
 
-const div=document.getElementById("analytics");
+const div=document.getElementById("analytics")
 
-div.innerHTML="";
+div.innerHTML=""
 
 data.forEach(item=>{
 
-const row=document.createElement("div");
+const row=document.createElement("div")
 
-row.className="border-b p-2";
+row.className="border-b p-2"
 
-row.innerText=`${item.file_name} — ${item.downloads} downloads`;
+row.innerText=`${item.file_name} — ${item.downloads} downloads`
 
-div.appendChild(row);
+div.appendChild(row)
 
-});
+})
 
 }
 

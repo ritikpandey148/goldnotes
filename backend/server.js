@@ -6,6 +6,7 @@ const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
+const fs = require("fs");
 const db = require("./db");
 
 const app = express();
@@ -14,9 +15,9 @@ const app = express();
 const ADMIN_USERNAME = "ritik030";
 const ADMIN_PASSWORD = "ritikgn030";
 
-// ================= CORS CONFIG =================
+// ================= CORS =================
 app.use(cors({
-origin: [
+origin:[
 "https://goldnotes.vercel.app",
 "http://localhost:3000",
 "http://localhost:5000"
@@ -30,18 +31,18 @@ app.use(express.json());
 const storage = multer.diskStorage({
 
 destination:(req,file,cb)=>{
-cb(null,"uploads/");
+cb(null,"uploads/")
 },
 
 filename:(req,file,cb)=>{
-cb(null,Date.now()+"_"+file.originalname);
+cb(null,Date.now()+"_"+file.originalname)
 }
 
 });
 
-const upload = multer({storage:storage});
+const upload = multer({storage});
 
-// ================= SERVE PDF FILES =================
+// ================= SERVE FILES =================
 const uploadsPath = path.join(__dirname,"uploads");
 app.use("/files",express.static(uploadsPath));
 
@@ -63,9 +64,9 @@ return res.status(400).json({message:"All fields required"});
 
 try{
 
-const hashedPassword = await bcrypt.hash(password,10);
+const hashedPassword=await bcrypt.hash(password,10);
 
-const sql = `
+const sql=`
 INSERT INTO users
 (first_name,last_name,gender,dob,year,username,password)
 VALUES(?,?,?,?,?,?,?)
@@ -82,9 +83,8 @@ return res.status(400).json({message:"Username exists"});
 res.json({message:"User Registered Successfully"});
 });
 
-}catch(error){
+}catch(err){
 
-console.error(error);
 res.status(500).json({message:"Server Error"});
 
 }
@@ -100,7 +100,8 @@ if(!username||!password){
 return res.status(400).json({message:"All fields required"});
 }
 
-// ===== ADMIN LOGIN =====
+// ADMIN LOGIN
+
 if(username===ADMIN_USERNAME && password===ADMIN_PASSWORD){
 
 return res.json({
@@ -114,7 +115,7 @@ role:"admin"
 
 }
 
-const sql = "SELECT * FROM users WHERE username=?";
+const sql="SELECT * FROM users WHERE username=?";
 
 db.query(sql,[username],async(err,result)=>{
 
@@ -128,9 +129,9 @@ return res.status(404).json({message:"User Not Found"});
 
 const user=result[0];
 
-const isMatch = await bcrypt.compare(password,user.password);
+const match=await bcrypt.compare(password,user.password);
 
-if(!isMatch){
+if(!match){
 return res.status(400).json({message:"Invalid Password"});
 }
 
@@ -138,12 +139,12 @@ res.json({
 message:"Login Success",
 user:{
 id:user.id,
+username:user.username,
 first_name:user.first_name,
 last_name:user.last_name,
 gender:user.gender,
 dob:user.dob,
 year:user.year,
-username:user.username,
 role:"user"
 }
 });
@@ -152,16 +153,84 @@ role:"user"
 
 });
 
+// ================= ADMIN UPLOAD =================
+app.post("/admin/upload",upload.single("pdf"),(req,res)=>{
+
+const {year,semester,subject,type}=req.body;
+
+if(!req.file){
+return res.status(400).json({message:"No file uploaded"});
+}
+
+const folder=`uploads/${year}/${semester}`;
+
+if(!fs.existsSync(folder)){
+fs.mkdirSync(folder,{recursive:true});
+}
+
+const filename=`${subject}_${type}.pdf`;
+
+const newPath=`${folder}/${filename}`;
+
+fs.renameSync(req.file.path,newPath);
+
+res.json({
+message:"File uploaded successfully",
+file:newPath
+});
+
+});
+
+// ================= ADMIN REPLACE =================
+app.post("/admin/replace",upload.single("pdf"),(req,res)=>{
+
+const {year,semester,subject,type}=req.body;
+
+const folder=`uploads/${year}/${semester}`;
+
+if(!fs.existsSync(folder)){
+fs.mkdirSync(folder,{recursive:true});
+}
+
+const filename=`${subject}_${type}.pdf`;
+
+const filePath=`${folder}/${filename}`;
+
+fs.renameSync(req.file.path,filePath);
+
+res.json({
+message:"File replaced successfully"
+});
+
+});
+
+// ================= ADMIN DELETE =================
+app.delete("/admin/delete",(req,res)=>{
+
+const {year,semester,filename}=req.body;
+
+const filePath=`uploads/${year}/${semester}/${filename}`;
+
+if(fs.existsSync(filePath)){
+
+fs.unlinkSync(filePath);
+
+res.json({message:"File deleted successfully"});
+
+}else{
+
+res.status(404).json({message:"File not found"});
+
+}
+
+});
+
 // ================= DOWNLOAD TRACK =================
 app.post("/download",(req,res)=>{
 
 const {user_id,subject,file_name,year,semester,type,file_path}=req.body;
 
-if(!user_id||!subject||!file_name){
-return res.status(400).json({message:"Missing fields"});
-}
-
-const sql = `
+const sql=`
 INSERT INTO downloads
 (user_id,subject,file_name,year,semester,type,file_path)
 VALUES(?,?,?,?,?,?,?)
@@ -181,70 +250,11 @@ res.json({message:"Download Recorded"});
 
 });
 
-// ================= VOTE =================
-app.post("/vote",(req,res)=>{
-
-const {user_id,subject}=req.body;
-
-const sql = `
-INSERT INTO votes (user_id,subject)
-VALUES (?,?)
-`;
-
-db.query(sql,[user_id,subject],(err)=>{
-
-if(err){
-return res.status(400).json({message:"Already Voted"});
-}
-
-res.json({message:"Vote Added"});
-
-});
-
-});
-
-// ================= ADMIN UPLOAD NOTES =================
-app.post("/admin/upload",upload.single("pdf"),(req,res)=>{
-
-const {subject,type}=req.body;
-
-if(!req.file){
-return res.status(400).json({message:"No file uploaded"});
-}
-
-res.json({
-message:"File Uploaded",
-file:req.file.filename
-});
-
-});
-
-// ================= ADMIN DELETE FILE =================
-app.delete("/admin/delete",(req,res)=>{
-
-const {filename}=req.body;
-
-const fs = require("fs");
-
-const filePath = path.join(__dirname,"uploads",filename);
-
-fs.unlink(filePath,(err)=>{
-
-if(err){
-return res.status(500).json({message:"Delete Failed"});
-}
-
-res.json({message:"File Deleted"});
-
-});
-
-});
-
 // ================= DOWNLOAD ANALYTICS =================
 app.get("/admin/analytics",(req,res)=>{
 
-const sql = `
-SELECT subject,file_name,COUNT(*) as downloads
+const sql=`
+SELECT file_name,COUNT(*) AS downloads
 FROM downloads
 GROUP BY file_name
 ORDER BY downloads DESC
@@ -262,12 +272,34 @@ res.json(result);
 
 });
 
-// ================= ERROR HANDLER =================
+// ================= VOTE =================
+app.post("/vote",(req,res)=>{
+
+const {user_id,subject}=req.body;
+
+const sql=`
+INSERT INTO votes (user_id,subject)
+VALUES (?,?)
+`;
+
+db.query(sql,[user_id,subject],(err)=>{
+
+if(err){
+return res.status(400).json({message:"Already Voted"});
+}
+
+res.json({message:"Vote Added"});
+
+});
+
+});
+
+// ================= ERROR =================
 app.use((req,res)=>{
 res.status(404).json({message:"Route Not Found"});
 });
 
-// ================= SERVER START =================
+// ================= SERVER =================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT,"0.0.0.0",()=>{
