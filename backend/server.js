@@ -51,6 +51,7 @@ app.get("/",(req,res)=>{
 res.send("GoldNotes Backend Running 🚀")
 })
 
+
 // ================= REGISTER =================
 app.post("/register",async(req,res)=>{
 
@@ -88,6 +89,7 @@ res.status(500).json({message:"Server Error"})
 }
 
 })
+
 
 // ================= LOGIN =================
 app.post("/login",(req,res)=>{
@@ -150,6 +152,7 @@ role:"user"
 
 })
 
+
 // ================= ADMIN UPLOAD =================
 app.post("/admin/upload",upload.single("pdf"),(req,res)=>{
 
@@ -166,19 +169,18 @@ fs.mkdirSync(folder,{recursive:true})
 }
 
 const filename=Date.now()+"_"+req.file.originalname
-
 const newPath=`${folder}/${filename}`
 
 fs.renameSync(req.file.path,newPath)
 
 const sql=`
 INSERT INTO materials
-(year,semester,subject,type,title,file_path)
-VALUES(?,?,?,?,?,?)
+(year,semester,subject,type,title,file_path,file_name)
+VALUES(?,?,?,?,?,?,?)
 `
 
 db.query(sql,
-[year,semester,subject,type,title,newPath],
+[year,semester,subject,type,title,newPath,filename],
 (err)=>{
 
 if(err){
@@ -190,6 +192,7 @@ res.json({message:"File uploaded successfully"})
 })
 
 })
+
 
 // ================= FETCH MATERIALS =================
 app.get("/materials",(req,res)=>{
@@ -214,6 +217,7 @@ res.json(result)
 })
 
 })
+
 
 // ================= ADD YT PLAYLIST =================
 app.post("/admin/add-yt",(req,res)=>{
@@ -240,24 +244,71 @@ res.json({message:"YT Playlist Added"})
 
 })
 
+
+// ================= REPLACE FILE =================
+app.post("/admin/replace",upload.single("pdf"),(req,res)=>{
+
+const {id}=req.body
+
+const file=req.file
+
+const sql="SELECT file_path FROM materials WHERE id=?"
+
+db.query(sql,[id],(err,result)=>{
+
+if(result.length===0){
+return res.status(404).json({message:"Material not found"})
+}
+
+const oldFile=result[0].file_path
+
+if(fs.existsSync(oldFile)){
+fs.unlinkSync(oldFile)
+}
+
+const newPath=`uploads/${file.filename}`
+
+fs.renameSync(file.path,newPath)
+
+db.query(
+"UPDATE materials SET file_path=?, file_name=? WHERE id=?",
+[newPath,file.filename,id]
+)
+
+res.json({message:"File replaced successfully"})
+
+})
+
+})
+
+
 // ================= DELETE MATERIAL =================
 app.delete("/admin/delete",(req,res)=>{
 
 const {id}=req.body
 
-const sql="DELETE FROM materials WHERE id=?"
+const sql="SELECT file_path FROM materials WHERE id=?"
 
-db.query(sql,[id],(err)=>{
+db.query(sql,[id],(err,result)=>{
 
-if(err){
-return res.status(500).json({message:"Delete Failed"})
+if(result.length===0){
+return res.status(404).json({message:"Material not found"})
 }
 
-res.json({message:"Material Deleted"})
+const file=result[0].file_path
+
+if(fs.existsSync(file)){
+fs.unlinkSync(file)
+}
+
+db.query("DELETE FROM materials WHERE id=?", [id])
+
+res.json({message:"Material deleted successfully"})
 
 })
 
 })
+
 
 // ================= DOWNLOAD TRACK =================
 app.post("/download",(req,res)=>{
@@ -284,6 +335,7 @@ res.json({message:"Download Recorded"})
 
 })
 
+
 // ================= ANALYTICS =================
 app.get("/admin/analytics",(req,res)=>{
 
@@ -305,6 +357,7 @@ res.json(result)
 })
 
 })
+
 
 // ================= VOTE =================
 app.post("/vote",(req,res)=>{
@@ -328,10 +381,12 @@ res.json({message:"Vote Added"})
 
 })
 
+
 // ================= ERROR =================
 app.use((req,res)=>{
 res.status(404).json({message:"Route Not Found"})
 })
+
 
 // ================= SERVER =================
 const PORT=process.env.PORT||5000

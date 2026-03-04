@@ -44,9 +44,7 @@ Upload Notes
 </h2>
 
 <select id="year" class="w-full border p-2 rounded mb-3"></select>
-
 <select id="semester" class="w-full border p-2 rounded mb-3"></select>
-
 <select id="subject" class="w-full border p-2 rounded mb-3"></select>
 
 <select id="type" class="w-full border p-2 rounded mb-3">
@@ -100,7 +98,6 @@ Add Playlist
 
 </div>
 
-
 <!-- ================= ANALYTICS ================= -->
 
 <div class="card p-6 max-w-5xl mx-auto mt-10">
@@ -120,7 +117,6 @@ Load Analytics
 
 </div>
 
-
 <script>
 
 const API="https://goldnotes-backend.onrender.com"
@@ -139,78 +135,33 @@ const subjectsData = {
 
 "1stYear":{
 
-"SEM1":[
-"Physics",
-"Chemistry",
-"Mathematics I",
-"Basic Electronics",
-"E-Mechanics",
-"c/c++"
-],
+"SEM1":["Physics","Chemistry","Mathematics I","Basic Electronics","E-Mechanics","c/c++"],
 
-"SEM2":[
-"Mathematics II",
-"Python",
-"physics-2",
-"chmistry-2",
-"E-Graphics"
-]
+"SEM2":["Mathematics II","Python","physics-2","chmistry-2","E-Graphics"]
 
 },
 
 "2ndYear":{
 
-"SEM3":[
-"DBMS",
-"AOA",
-"DMGT",
-"EVS",
-"OOP"
-],
+"SEM3":["DBMS","AOA","DMGT","EVS","OOP"],
 
-"SEM4":[
-"STO",
-"SEPM",
-"MAM",
-"DT",
-"MDM-info-sec"
-]
+"SEM4":["STO","SEPM","MAM","DT","MDM-info-sec"]
 
 },
 
 "3rdYear":{
 
-"SEM5":[
-"Artificial Intelligence",
-"Web Development",
-"Microprocessors",
-"Data Analytics"
-],
+"SEM5":["Artificial Intelligence","Web Development","Microprocessors","Data Analytics"],
 
-"SEM6":[
-"Machine Learning",
-"Cloud Computing",
-"Compiler Design",
-"Cyber Security"
-]
+"SEM6":["Machine Learning","Cloud Computing","Compiler Design","Cyber Security"]
 
 },
 
 "4thYear":{
 
-"SEM7":[
-"Big Data",
-"Blockchain",
-"Internet of Things",
-"Project Phase I"
-],
+"SEM7":["Big Data","Blockchain","Internet of Things","Project Phase I"],
 
-"SEM8":[
-"Project Phase II",
-"Advanced AI",
-"Mobile App Development",
-"Entrepreneurship"
-]
+"SEM8":["Project Phase II","Advanced AI","Mobile App Development","Entrepreneurship"]
 
 }
 
@@ -222,29 +173,32 @@ const yearSelect=document.getElementById("year")
 const semSelect=document.getElementById("semester")
 const subjectSelect=document.getElementById("subject")
 
-function loadYears(){
+// ================= LOAD YEARS =================
 
 Object.keys(subjectsData).forEach(year=>{
 
 const opt=document.createElement("option")
 opt.value=year
 opt.innerText=year
-
 yearSelect.appendChild(opt)
 
 })
 
 loadSemesters()
 
-}
+yearSelect.onchange=loadSemesters
+semSelect.onchange=loadSubjects
+
+
+// ================= LOAD SEM =================
 
 function loadSemesters(){
 
-const year=yearSelect.value
-
 semSelect.innerHTML=""
 
-Object.keys(subjectsData[year]).forEach(sem=>{
+const sems=subjectsData[yearSelect.value]
+
+Object.keys(sems).forEach(sem=>{
 
 const opt=document.createElement("option")
 opt.value=sem
@@ -258,16 +212,19 @@ loadSubjects()
 
 }
 
-function loadSubjects(){
 
-const year=yearSelect.value
-const sem=semSelect.value
+// ================= LOAD SUBJECT =================
+
+function loadSubjects(){
 
 subjectSelect.innerHTML=""
 
-subjectsData[year][sem].forEach(sub=>{
+const subjects=subjectsData[yearSelect.value][semSelect.value]
+
+subjects.forEach(sub=>{
 
 const opt=document.createElement("option")
+
 opt.value=sub
 opt.innerText=sub
 
@@ -276,11 +233,6 @@ subjectSelect.appendChild(opt)
 })
 
 }
-
-yearSelect.addEventListener("change",loadSemesters)
-semSelect.addEventListener("change",loadSubjects)
-
-loadYears()
 
 
 // ================= UPLOAD =================
@@ -297,8 +249,10 @@ form.append("title",document.getElementById("title").value)
 form.append("pdf",document.getElementById("pdfFile").files[0])
 
 const res=await fetch(`${API}/admin/upload`,{
+
 method:"POST",
 body:form
+
 })
 
 const data=await res.json()
