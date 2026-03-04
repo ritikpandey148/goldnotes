@@ -93,11 +93,17 @@ Open YouTube Playlist
 
 }else{
 
+// FILE URL
 const fileURL=`${API_BASE}/files/${item.file_path.replace("uploads/","")}`
+
+// FILE NAME
+const fileName=item.file_path.split("/").pop()
 
 card.innerHTML=`
 
-<p class="mb-4 font-semibold">${item.title || item.file_name}</p>
+<p class="mb-4 font-semibold">
+${item.title || fileName}
+</p>
 
 <div class="flex gap-4">
 
@@ -111,7 +117,7 @@ View
 
 <a href="${fileURL}"
 download
-onclick="trackDownload('${subject}','${item.file_name}','${type}','${fileURL}')"
+onclick="trackDownload('${subject}','${fileName}','${type}','${fileURL}')"
 class="bg-black px-4 py-2 rounded-xl text-white">
 
 Download
@@ -130,6 +136,7 @@ container.appendChild(card)
 
 }catch(err){
 
+console.log(err)
 container.innerHTML="<p class='text-center'>Error loading files</p>"
 
 }
@@ -158,6 +165,8 @@ body:JSON.stringify({
 user_id:user.id,
 subject:subject,
 file_name:fileName,
+year:year,
+semester:semester,
 type:type,
 file_path:filePath
 
