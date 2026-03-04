@@ -25,11 +25,10 @@ box-shadow:0 10px 25px rgba(0,0,0,0.08);
 Chill karo sab milega 😎, jo chahiye uthalo!
 </p>
 
-<!-- VOTE -->
+<!-- Vote -->
 <div class="text-center mb-8">
 
-<button id="voteBtn"
-onclick="voteSubject()"
+<button onclick="voteSubject()"
 class="bg-yellow-600 text-white px-5 py-2 rounded-xl hover:bg-yellow-700">
 
 👍 Vote This Subject
@@ -40,99 +39,79 @@ class="bg-yellow-600 text-white px-5 py-2 rounded-xl hover:bg-yellow-700">
 
 </div>
 
-<!-- OPTIONS -->
+<!-- Options -->
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
 <a id="studyLink"
 class="card p-6 text-center hover:scale-105 transition font-semibold cursor-pointer">
-
 Study Material
-
 </a>
 
 <a id="notesLink"
 class="card p-6 text-center hover:scale-105 transition font-semibold cursor-pointer">
-
 Important Notes
-
 </a>
 
 <a id="pyqLink"
 class="card p-6 text-center hover:scale-105 transition font-semibold cursor-pointer">
-
 PYQs
-
 </a>
 
 <a id="ytLink"
 class="card p-6 text-center hover:scale-105 transition font-semibold cursor-pointer">
-
 Best YT Playlist
-
 </a>
 
 </div>
 
 <script>
 
-// ================= CONFIG =================
-
+// API
 const API_BASE="https://goldnotes-backend.onrender.com"
 
-// ================= URL PARAMS =================
-
+// URL PARAMS
 const params=new URLSearchParams(window.location.search)
 
 const subject=params.get("subject")
-const year=params.get("year")
-const semester=params.get("semester")
+const year=params.get("year") || ""
+const semester=params.get("semester") || ""
 
 const user=JSON.parse(localStorage.getItem("user"))
 
+// Login check
 if(!user){
 window.location.href="login.html"
 }
 
+// Subject safety
 if(!subject){
 document.getElementById("subjectTitle").innerText="Invalid Subject"
 throw new Error("Subject missing")
 }
 
+// Show subject
 document.getElementById("subjectTitle").innerText=subject
 
 
-// ================= LINKS =================
+// LINKS
 
 document.getElementById("studyLink").href=
-
 `files.html?year=${year}&semester=${semester}&subject=${encodeURIComponent(subject)}&type=study`
 
-
 document.getElementById("notesLink").href=
-
 `files.html?year=${year}&semester=${semester}&subject=${encodeURIComponent(subject)}&type=notes`
 
-
 document.getElementById("pyqLink").href=
-
 `files.html?year=${year}&semester=${semester}&subject=${encodeURIComponent(subject)}&type=pyq`
 
-
 document.getElementById("ytLink").href=
-
 `files.html?year=${year}&semester=${semester}&subject=${encodeURIComponent(subject)}&type=yt`
 
 
-
-// ================= VOTE =================
+// VOTE
 
 async function voteSubject(){
-
-if(!user){
-alert("Please login first")
-return
-}
 
 try{
 
@@ -161,15 +140,10 @@ voteMsg.innerText="❌ You already voted for this subject"
 voteMsg.className="mt-3 text-sm text-red-600"
 
 }
-else if(res.ok){
+else{
 
 voteMsg.innerText="✅ Vote added successfully!"
 voteMsg.className="mt-3 text-sm text-green-600"
-
-}
-else{
-
-voteMsg.innerText="Something went wrong"
 
 }
 

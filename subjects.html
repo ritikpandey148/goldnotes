@@ -46,7 +46,6 @@ else if(sem==3 || sem==4) year="2ndYear"
 else if(sem==5 || sem==6) year="3rdYear"
 else if(sem==7 || sem==8) year="4thYear"
 
-
 const semesterSubjects = {
 
 1:["Physics","Chemistry","Mathematics I","Basic Electronics","E-Mechanics","c/c++"],
@@ -67,15 +66,14 @@ const semesterSubjects = {
 
 };
 
-
 if(semesterSubjects[sem]){
 
 semesterSubjects[sem].forEach(subject=>{
 
 const link=document.createElement("a");
 
-// ✅ CORRECT LINK
-link.href=`materials.html?year=${year}&semester=SEM${sem}&subject=${encodeURIComponent(subject)}`
+// ✅ FIXED LINK
+link.href=`material.html?year=${year}&semester=SEM${sem}&subject=${encodeURIComponent(subject)}`
 
 link.className="card p-6 hover:scale-105 transition font-semibold text-center"
 
