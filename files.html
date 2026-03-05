@@ -94,7 +94,7 @@ Open YouTube Playlist
 }else{
 
 // FILE URL
-const fileURL=`${API_BASE}/files/${item.file_path.replace("uploads/","")}`
+const fileURL=`${API_BASE}/${item.file_path}`
 
 // FILE NAME
 const fileName=item.file_path.split("/").pop()

@@ -44,7 +44,7 @@ const upload=multer({storage})
 
 // ================= SERVE FILES =================
 const uploadsPath=path.join(__dirname,"uploads")
-app.use("/files",express.static(uploadsPath))
+app.use("/uploads",express.static(uploadsPath))
 
 // ================= ROOT =================
 app.get("/",(req,res)=>{
