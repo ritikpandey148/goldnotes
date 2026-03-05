@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html>
 <head>
 <script src="https://cdn.tailwindcss.com"></script>
@@ -8,28 +9,28 @@
 
 <style>
 body{
-font-family: 'Poppins', sans-serif;
-background: linear-gradient(to bottom,#f8f6f2,#f3efe7);
+font-family:'Poppins',sans-serif;
+background:linear-gradient(to bottom,#f8f6f2,#f3efe7);
 }
 .card{
 background:white;
 border-radius:20px;
 box-shadow:0 10px 25px rgba(0,0,0,0.08);
 }
-@keyframes blink {
-0% {opacity:1;}
-50% {opacity:0.4;}
-100% {opacity:1;}
+@keyframes blink{
+0%{opacity:1;}
+50%{opacity:0.4;}
+100%{opacity:1;}
 }
 .blink{
 animation:blink 1.5s infinite;
 }
 </style>
+
 </head>
 
 <body>
 
-<!-- HEADER -->
 <header class="bg-white shadow-md p-4 flex items-center justify-between">
 
 <div class="flex items-center gap-3">
@@ -38,25 +39,27 @@ animation:blink 1.5s infinite;
 </div>
 
 <div class="hidden md:flex w-1/3 relative">
-<input id="searchInput" type="text"
+
+<input id="searchInput"
+type="text"
 placeholder="Search semester or subject..."
 class="w-full p-2 rounded-xl border">
 
 <div id="searchResults"
 class="absolute top-10 w-full bg-white shadow-lg rounded-xl hidden z-50 max-h-60 overflow-y-auto">
 </div>
+
 </div>
 
 <div class="flex items-center gap-4">
+
 <span id="usernameDisplay" class="font-semibold text-gray-700"></span>
 
-<button onclick="toggleMenu()" class="text-2xl">
-☰
-</button>
+<button onclick="toggleMenu()" class="text-2xl">☰</button>
+
 </div>
 </header>
 
-<!-- SIDE MENU -->
 <div id="sideMenu" class="hidden fixed right-0 top-0 h-full w-64 bg-white shadow-xl p-6 z-50">
 
 <button onclick="toggleMenu()" class="text-right w-full mb-6 text-xl">✖</button>
@@ -67,7 +70,6 @@ class="absolute top-10 w-full bg-white shadow-lg rounded-xl hidden z-50 max-h-60
 
 <li><a href="/mydownloads.html" onclick="closeMenu()">My Downloads</a></li>
 
-<!-- ADMIN PANEL -->
 <li id="adminMenu" class="hidden">
 <a href="/admin-panel.html" onclick="closeMenu()">Admin Panel</a>
 </li>
@@ -78,7 +80,6 @@ class="absolute top-10 w-full bg-white shadow-lg rounded-xl hidden z-50 max-h-60
 
 </div>
 
-<!-- MAIN -->
 <section class="text-center mt-10 px-4">
 
 <h1 class="text-4xl font-bold text-gray-700 blink">
@@ -108,60 +109,17 @@ GoldNotes
 </a>
 
 </div>
-</section>
-
-<section class="mt-16 px-6 max-w-6xl mx-auto">
-
-<h2 class="text-2xl font-bold text-center mb-8 text-gray-700">
-Student Problems & Our Smart Solution
-</h2>
-
-<div class="grid md:grid-cols-2 gap-10">
-
-<div class="card p-6">
-
-<img src="assets/problem.jpg" class="rounded-xl mb-4 w-full object-cover">
-
-<h3 class="text-xl font-semibold text-red-600 mb-2">
-Problem Faced by Students
-</h3>
-
-<p class="text-gray-600 text-sm">
-Students struggle to find proper notes, PYQs, important questions
-and study materials from multiple platforms like WhatsApp,
-random websites and libraries.
-</p>
-
-</div>
-
-<div class="card p-6">
-
-<img src="assets/solution.jpg" class="rounded-xl mb-4 w-full object-cover">
-
-<h3 class="text-xl font-semibold text-green-600 mb-2">
-Our Solution - GoldNotes
-</h3>
-
-<p class="text-gray-600 text-sm">
-GoldNotes provides a centralized platform where students
-can download organized notes, PYQs and important study material
-in just one click.
-</p>
-
-</div>
-
-</div>
 
 </section>
 
 <footer class="text-center mt-16 mb-6 text-gray-600 text-sm">
-Developed by Team Hackverse - Ritik Pandey ( COMPUTER )
+Developed by Team Hackverse - Ritik Pandey
 </footer>
 
-<script>s
+<script>
 
 // USER CHECK
-const user = JSON.parse(localStorage.getItem("user"));
+const user=JSON.parse(localStorage.getItem("user"));
 
 if(!user){
 window.location.href="/login.html";
@@ -169,12 +127,12 @@ window.location.href="/login.html";
 
 document.getElementById("usernameDisplay").innerText="👤 "+user.username;
 
-// ADMIN DETECT
 if(user.username==="ritik030"){
 document.getElementById("adminMenu").classList.remove("hidden");
 }
 
 }
+
 
 // MENU
 function toggleMenu(){
@@ -185,20 +143,83 @@ function closeMenu(){
 document.getElementById("sideMenu").classList.add("hidden");
 }
 
+
 // SEARCH DATA
 const searchData=[
 
+// semesters
 {name:"SEM 1",link:"/subjects.html?sem=1"},
 {name:"SEM 2",link:"/subjects.html?sem=2"},
 {name:"SEM 3",link:"/subjects.html?sem=3"},
 {name:"SEM 4",link:"/subjects.html?sem=4"},
+{name:"SEM 5",link:"/subjects.html?sem=5"},
+{name:"SEM 6",link:"/subjects.html?sem=6"},
+{name:"SEM 7",link:"/subjects.html?sem=7"},
+{name:"SEM 8",link:"/subjects.html?sem=8"},
 
-{name:"DBMS",link:"/materials.html?subject=DBMS"},
-{name:"AOA",link:"/materials.html?subject=AOA"},
-{name:"EVS",link:"/materials.html?subject=EVS"},
-{name:"OOP",link:"/materials.html?subject=OOP"}
+
+// SEM1
+{name:"Physics",link:"/materials.html?year=1stYear&semester=SEM1&subject=Physics"},
+{name:"Chemistry",link:"/materials.html?year=1stYear&semester=SEM1&subject=Chemistry"},
+{name:"Mathematics I",link:"/materials.html?year=1stYear&semester=SEM1&subject=Mathematics%20I"},
+{name:"Basic Electronics",link:"/materials.html?year=1stYear&semester=SEM1&subject=Basic%20Electronics"},
+{name:"E-Mechanics",link:"/materials.html?year=1stYear&semester=SEM1&subject=E-Mechanics"},
+{name:"c/c++",link:"/materials.html?year=1stYear&semester=SEM1&subject=c%2Fc%2B%2B"},
+
+
+// SEM2
+{name:"Mathematics II",link:"/materials.html?year=1stYear&semester=SEM2&subject=Mathematics%20II"},
+{name:"Python",link:"/materials.html?year=1stYear&semester=SEM2&subject=Python"},
+{name:"physics-2",link:"/materials.html?year=1stYear&semester=SEM2&subject=physics-2"},
+{name:"chmistry-2",link:"/materials.html?year=1stYear&semester=SEM2&subject=chmistry-2"},
+{name:"E-Graphics",link:"/materials.html?year=1stYear&semester=SEM2&subject=E-Graphics"},
+
+
+// SEM3
+{name:"DBMS",link:"/materials.html?year=2ndYear&semester=SEM3&subject=DBMS"},
+{name:"AOA",link:"/materials.html?year=2ndYear&semester=SEM3&subject=AOA"},
+{name:"DMGT",link:"/materials.html?year=2ndYear&semester=SEM3&subject=DMGT"},
+{name:"EVS",link:"/materials.html?year=2ndYear&semester=SEM3&subject=EVS"},
+{name:"OOP",link:"/materials.html?year=2ndYear&semester=SEM3&subject=OOP"},
+
+
+// SEM4
+{name:"STO",link:"/materials.html?year=2ndYear&semester=SEM4&subject=STO"},
+{name:"SEPM",link:"/materials.html?year=2ndYear&semester=SEM4&subject=SEPM"},
+{name:"MAM",link:"/materials.html?year=2ndYear&semester=SEM4&subject=MAM"},
+{name:"DT",link:"/materials.html?year=2ndYear&semester=SEM4&subject=DT"},
+{name:"MDM-info-sec",link:"/materials.html?year=2ndYear&semester=SEM4&subject=MDM-info-sec"},
+
+
+// SEM5
+{name:"Artificial Intelligence",link:"/materials.html?year=3rdYear&semester=SEM5&subject=Artificial%20Intelligence"},
+{name:"Web Development",link:"/materials.html?year=3rdYear&semester=SEM5&subject=Web%20Development"},
+{name:"Microprocessors",link:"/materials.html?year=3rdYear&semester=SEM5&subject=Microprocessors"},
+{name:"Data Analytics",link:"/materials.html?year=3rdYear&semester=SEM5&subject=Data%20Analytics"},
+
+
+// SEM6
+{name:"Machine Learning",link:"/materials.html?year=3rdYear&semester=SEM6&subject=Machine%20Learning"},
+{name:"Cloud Computing",link:"/materials.html?year=3rdYear&semester=SEM6&subject=Cloud%20Computing"},
+{name:"Compiler Design",link:"/materials.html?year=3rdYear&semester=SEM6&subject=Compiler%20Design"},
+{name:"Cyber Security",link:"/materials.html?year=3rdYear&semester=SEM6&subject=Cyber%20Security"},
+
+
+// SEM7
+{name:"Big Data",link:"/materials.html?year=4thYear&semester=SEM7&subject=Big%20Data"},
+{name:"Blockchain",link:"/materials.html?year=4thYear&semester=SEM7&subject=Blockchain"},
+{name:"Internet of Things",link:"/materials.html?year=4thYear&semester=SEM7&subject=Internet%20of%20Things"},
+{name:"Project Phase I",link:"/materials.html?year=4thYear&semester=SEM7&subject=Project%20Phase%20I"},
+
+
+// SEM8
+{name:"Project Phase II",link:"/materials.html?year=4thYear&semester=SEM8&subject=Project%20Phase%20II"},
+{name:"Advanced AI",link:"/materials.html?year=4thYear&semester=SEM8&subject=Advanced%20AI"},
+{name:"Mobile App Development",link:"/materials.html?year=4thYear&semester=SEM8&subject=Mobile%20App%20Development"},
+{name:"Entrepreneurship",link:"/materials.html?year=4thYear&semester=SEM8&subject=Entrepreneurship"}
 
 ];
+
 
 const searchInput=document.getElementById("searchInput");
 const searchResults=document.getElementById("searchResults");
