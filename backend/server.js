@@ -21,6 +21,7 @@ origin:[
 "http://localhost:3000",
 "http://localhost:5000"
 ],
+methods:["GET","POST","DELETE"],
 credentials:true
 }))
 
@@ -88,10 +89,10 @@ try{
 
 const hashedPassword=await bcrypt.hash(password,10)
 
-let photoPath=null
+let photoPath = null
 
 if(req.file){
-photoPath=`uploads/profile/${req.file.filename}`
+photoPath = `uploads/profile/${req.file.filename}`
 }
 
 const sql=`INSERT INTO users
@@ -139,7 +140,10 @@ role:"admin"
 }
 
 db.query(
-"SELECT * FROM users WHERE username=? LIMIT 1",
+`SELECT id,username,password,first_name,last_name,gender,dob,year,profile_photo 
+FROM users 
+WHERE username=? 
+LIMIT 1`,
 [username],
 async(err,result)=>{
 
@@ -147,7 +151,7 @@ if(err){
 return res.status(500).json({message:"Server Error"})
 }
 
-if(result.length===0){
+if(!result || result.length===0){
 return res.status(404).json({message:"User Not Found"})
 }
 
@@ -213,7 +217,7 @@ const newPhoto=`uploads/profile/${req.file.filename}`
 
 db.query("SELECT profile_photo FROM users WHERE id=?",[user_id],(err,result)=>{
 
-if(result.length>0 && result[0].profile_photo){
+if(result && result.length>0 && result[0].profile_photo){
 
 const oldPhoto=path.join(__dirname,result[0].profile_photo)
 
@@ -253,7 +257,7 @@ db.query(
 [user_id],
 (err,result)=>{
 
-if(result.length>0 && result[0].profile_photo){
+if(result && result.length>0 && result[0].profile_photo){
 
 const filePath=path.join(__dirname,result[0].profile_photo)
 
