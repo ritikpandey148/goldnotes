@@ -53,7 +53,14 @@ class="absolute top-10 w-full bg-white shadow-lg rounded-xl hidden z-50 max-h-60
 
 <div class="flex items-center gap-4">
 
+<div class="flex items-center gap-2">
+
+<img id="userAvatar"
+class="w-8 h-8 rounded-full object-cover border">
+
 <span id="usernameDisplay" class="font-semibold text-gray-700"></span>
+
+</div>
 
 <button onclick="toggleMenu()" class="text-2xl">☰</button>
 
@@ -90,9 +97,9 @@ Mumbai University
 GoldNotes
 </h2>
 
-<h2 class="text-2xl font-bold text-black-700 mt-2">
+<h2 class="text-2xl font-bold text-gray-700 mt-2">
 The Best notes For Success 
- For SLRTCE Students  
+ - For SLRTCE Students  
 </h2>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-10">
@@ -117,59 +124,13 @@ The Best notes For Success
 
 </section>
 
-<section class="mt-16 px-6 max-w-6xl mx-auto">
-
-<h2 class="text-2xl font-bold text-center mb-8 text-gray-700">
-Student Problems & Our Smart Solution
-</h2>
-
-<div class="grid md:grid-cols-2 gap-10">
-
-<div class="card p-6">
-
-<img src="assets/problem.jpg" class="rounded-xl mb-4 w-full object-cover">
-
-<h3 class="text-xl font-semibold text-red-600 mb-2">
-Problem Faced by Students
-</h3>
-
-<p class="text-gray-600 text-sm">
-Students struggle to find proper notes, PYQs, important questions
-and study materials from multiple platforms like WhatsApp,
-random websites and libraries. This wastes time and creates
-confusion especially during exams.
-</p>
-
-</div>
-
-<div class="card p-6">
-
-<img src="assets/solution.jpg" class="rounded-xl mb-4 w-full object-cover">
-
-<h3 class="text-xl font-semibold text-green-600 mb-2">
-Our Solution – GoldNotes
-</h3>
-
-<p class="text-gray-600 text-sm">
-GoldNotes provides a centralized platform where students
-can download organized notes, PYQs and important study
-material in just one click. Everything is structured
-year-wise and subject-wise, saving time and improving
-exam preparation.
-</p>
-
-</div>
-
-</div>
-
-</section>
-
-
 <footer class="text-center mt-16 mb-6 text-gray-600 text-sm">
 Developed by Team Hackverse - Ritik Pandey (COMPUTER)
 </footer>
 
 <script>
+
+const API="https://goldnotes-backend.onrender.com"
 
 // USER CHECK
 const user=JSON.parse(localStorage.getItem("user"));
@@ -178,14 +139,36 @@ if(!user){
 window.location.href="/login.html";
 }else{
 
-document.getElementById("usernameDisplay").innerText="👤 "+user.username;
+document.getElementById("usernameDisplay").innerText=user.username;
+
+// AVATAR SYSTEM
+let avatar=""
+
+if(user.profile_photo){
+
+avatar=`${API}/${user.profile_photo}`
+
+}else{
+
+if(user.gender==="Male"){
+avatar="assets/default-male.png"
+}
+else if(user.gender==="Female"){
+avatar="assets/default-female.png"
+}
+else{
+avatar="assets/default-user.png"
+}
+
+}
+
+document.getElementById("userAvatar").src=avatar
 
 if(user.username==="ritik030"){
 document.getElementById("adminMenu").classList.remove("hidden");
 }
 
 }
-
 
 // MENU
 function toggleMenu(){
@@ -195,133 +178,6 @@ document.getElementById("sideMenu").classList.toggle("hidden");
 function closeMenu(){
 document.getElementById("sideMenu").classList.add("hidden");
 }
-
-
-// SEARCH DATA
-const searchData=[
-
-// semesters
-{name:"SEM 1",link:"/subjects.html?sem=1"},
-{name:"SEM 2",link:"/subjects.html?sem=2"},
-{name:"SEM 3",link:"/subjects.html?sem=3"},
-{name:"SEM 4",link:"/subjects.html?sem=4"},
-{name:"SEM 5",link:"/subjects.html?sem=5"},
-{name:"SEM 6",link:"/subjects.html?sem=6"},
-{name:"SEM 7",link:"/subjects.html?sem=7"},
-{name:"SEM 8",link:"/subjects.html?sem=8"},
-
-
-// SEM1
-{name:"Physics",link:"/materials.html?year=1stYear&semester=SEM1&subject=Physics"},
-{name:"Chemistry",link:"/materials.html?year=1stYear&semester=SEM1&subject=Chemistry"},
-{name:"Mathematics I",link:"/materials.html?year=1stYear&semester=SEM1&subject=Mathematics%20I"},
-{name:"Basic Electronics",link:"/materials.html?year=1stYear&semester=SEM1&subject=Basic%20Electronics"},
-{name:"E-Mechanics",link:"/materials.html?year=1stYear&semester=SEM1&subject=E-Mechanics"},
-{name:"c/c++",link:"/materials.html?year=1stYear&semester=SEM1&subject=c%2Fc%2B%2B"},
-
-
-// SEM2
-{name:"Mathematics II",link:"/materials.html?year=1stYear&semester=SEM2&subject=Mathematics%20II"},
-{name:"Python",link:"/materials.html?year=1stYear&semester=SEM2&subject=Python"},
-{name:"physics-2",link:"/materials.html?year=1stYear&semester=SEM2&subject=physics-2"},
-{name:"chmistry-2",link:"/materials.html?year=1stYear&semester=SEM2&subject=chmistry-2"},
-{name:"E-Graphics",link:"/materials.html?year=1stYear&semester=SEM2&subject=E-Graphics"},
-
-
-// SEM3
-{name:"DBMS",link:"/materials.html?year=2ndYear&semester=SEM3&subject=DBMS"},
-{name:"AOA",link:"/materials.html?year=2ndYear&semester=SEM3&subject=AOA"},
-{name:"DMGT",link:"/materials.html?year=2ndYear&semester=SEM3&subject=DMGT"},
-{name:"EVS",link:"/materials.html?year=2ndYear&semester=SEM3&subject=EVS"},
-{name:"OOP",link:"/materials.html?year=2ndYear&semester=SEM3&subject=OOP"},
-
-
-// SEM4
-{name:"STO",link:"/materials.html?year=2ndYear&semester=SEM4&subject=STO"},
-{name:"SEPM",link:"/materials.html?year=2ndYear&semester=SEM4&subject=SEPM"},
-{name:"MAM",link:"/materials.html?year=2ndYear&semester=SEM4&subject=MAM"},
-{name:"DT",link:"/materials.html?year=2ndYear&semester=SEM4&subject=DT"},
-{name:"MDM-info-sec",link:"/materials.html?year=2ndYear&semester=SEM4&subject=MDM-info-sec"},
-
-
-// SEM5
-{name:"Artificial Intelligence",link:"/materials.html?year=3rdYear&semester=SEM5&subject=Artificial%20Intelligence"},
-{name:"Web Development",link:"/materials.html?year=3rdYear&semester=SEM5&subject=Web%20Development"},
-{name:"Microprocessors",link:"/materials.html?year=3rdYear&semester=SEM5&subject=Microprocessors"},
-{name:"Data Analytics",link:"/materials.html?year=3rdYear&semester=SEM5&subject=Data%20Analytics"},
-
-
-// SEM6
-{name:"Machine Learning",link:"/materials.html?year=3rdYear&semester=SEM6&subject=Machine%20Learning"},
-{name:"Cloud Computing",link:"/materials.html?year=3rdYear&semester=SEM6&subject=Cloud%20Computing"},
-{name:"Compiler Design",link:"/materials.html?year=3rdYear&semester=SEM6&subject=Compiler%20Design"},
-{name:"Cyber Security",link:"/materials.html?year=3rdYear&semester=SEM6&subject=Cyber%20Security"},
-
-
-// SEM7
-{name:"Big Data",link:"/materials.html?year=4thYear&semester=SEM7&subject=Big%20Data"},
-{name:"Blockchain",link:"/materials.html?year=4thYear&semester=SEM7&subject=Blockchain"},
-{name:"Internet of Things",link:"/materials.html?year=4thYear&semester=SEM7&subject=Internet%20of%20Things"},
-{name:"Project Phase I",link:"/materials.html?year=4thYear&semester=SEM7&subject=Project%20Phase%20I"},
-
-
-// SEM8
-{name:"Project Phase II",link:"/materials.html?year=4thYear&semester=SEM8&subject=Project%20Phase%20II"},
-{name:"Advanced AI",link:"/materials.html?year=4thYear&semester=SEM8&subject=Advanced%20AI"},
-{name:"Mobile App Development",link:"/materials.html?year=4thYear&semester=SEM8&subject=Mobile%20App%20Development"},
-{name:"Entrepreneurship",link:"/materials.html?year=4thYear&semester=SEM8&subject=Entrepreneurship"}
-
-];
-
-
-const searchInput=document.getElementById("searchInput");
-const searchResults=document.getElementById("searchResults");
-
-searchInput.addEventListener("input",function(){
-
-const value=this.value.toLowerCase();
-searchResults.innerHTML="";
-
-if(value===""){
-searchResults.classList.add("hidden");
-return;
-}
-
-const filtered=searchData.filter(item =>
-item.name.toLowerCase().includes(value)
-);
-
-if(filtered.length===0){
-searchResults.classList.add("hidden");
-return;
-}
-
-filtered.forEach(item=>{
-
-const div=document.createElement("div");
-
-div.className="p-3 hover:bg-yellow-100 cursor-pointer border-b";
-div.innerText=item.name;
-
-div.onclick=()=>{
-window.location.href=item.link;
-};
-
-searchResults.appendChild(div);
-
-});
-
-searchResults.classList.remove("hidden");
-
-});
-
-document.addEventListener("click",function(e){
-
-if(!searchInput.contains(e.target) && !searchResults.contains(e.target)){
-searchResults.classList.add("hidden");
-}
-
-});
 
 </script>
 
