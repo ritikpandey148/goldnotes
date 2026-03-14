@@ -1,4 +1,3 @@
-// ================= LOAD ENV =================
 require("dotenv").config()
 
 const express = require("express")
@@ -27,11 +26,18 @@ credentials:true
 
 app.use(express.json())
 
+// ================= ENSURE UPLOADS FOLDER =================
+const uploadsPath = path.join(__dirname,"uploads")
+
+if(!fs.existsSync(uploadsPath)){
+fs.mkdirSync(uploadsPath,{recursive:true})
+}
+
 // ================= FILE STORAGE =================
-const storage=multer.diskStorage({
+const storage = multer.diskStorage({
 
 destination:(req,file,cb)=>{
-cb(null,"uploads/")
+cb(null,uploadsPath)
 },
 
 filename:(req,file,cb)=>{
@@ -40,17 +46,15 @@ cb(null,Date.now()+"_"+file.originalname)
 
 })
 
-const upload=multer({storage})
+const upload = multer({storage})
 
 // ================= SERVE FILES =================
-const uploadsPath=path.join(__dirname,"uploads")
 app.use("/uploads",express.static(uploadsPath))
 
 // ================= ROOT =================
 app.get("/",(req,res)=>{
 res.send("GoldNotes Backend Running 🚀")
 })
-
 
 // ================= REGISTER =================
 app.post("/register",async(req,res)=>{
@@ -65,11 +69,9 @@ try{
 
 const hashedPassword=await bcrypt.hash(password,10)
 
-const sql=`
-INSERT INTO users
+const sql=`INSERT INTO users
 (first_name,last_name,gender,dob,year,username,password)
-VALUES(?,?,?,?,?,?,?)
-`
+VALUES(?,?,?,?,?,?,?)`
 
 db.query(sql,
 [first_name,last_name,gender,dob,year,username,hashedPassword],
@@ -90,9 +92,10 @@ res.status(500).json({message:"Server Error"})
 
 })
 
-
 // ================= LOGIN =================
-app.post("/login",(req,res)=>{
+app.post("/login",async(req,res)=>{
+
+try{
 
 const {username,password}=req.body
 
@@ -114,9 +117,11 @@ role:"admin"
 
 }
 
-const sql="SELECT * FROM users WHERE username=?"
-
-db.query(sql,[username],async(err,result)=>{
+// FIND USER
+db.query(
+"SELECT id,username,password,first_name,last_name,gender,dob,year FROM users WHERE username=? LIMIT 1",
+[username],
+async (err,result)=>{
 
 if(err){
 return res.status(500).json({message:"Server Error"})
@@ -128,12 +133,14 @@ return res.status(404).json({message:"User Not Found"})
 
 const user=result[0]
 
-const match=await bcrypt.compare(password,user.password)
+// PASSWORD CHECK
+const isMatch = await bcrypt.compare(password,user.password)
 
-if(!match){
+if(!isMatch){
 return res.status(400).json({message:"Invalid Password"})
 }
 
+// SUCCESS RESPONSE
 res.json({
 message:"Login Success",
 user:{
@@ -150,8 +157,14 @@ role:"user"
 
 })
 
-})
+}catch(error){
 
+console.error(error)
+res.status(500).json({message:"Login Error"})
+
+}
+
+})
 
 // ================= ADMIN UPLOAD =================
 app.post("/admin/upload",upload.single("pdf"),(req,res)=>{
@@ -162,25 +175,25 @@ if(!req.file){
 return res.status(400).json({message:"No file uploaded"})
 }
 
-const folder=`uploads/${year}/${semester}`
+const folder = path.join(uploadsPath,year,semester)
 
 if(!fs.existsSync(folder)){
 fs.mkdirSync(folder,{recursive:true})
 }
 
-const filename=Date.now()+"_"+req.file.originalname
-const newPath=`${folder}/${filename}`
+const filename = Date.now()+"_"+req.file.originalname
+const newPath = path.join(folder,filename)
 
 fs.renameSync(req.file.path,newPath)
 
-const sql=`
-INSERT INTO materials
+const dbPath=`uploads/${year}/${semester}/${filename}`
+
+const sql=`INSERT INTO materials
 (year,semester,subject,type,title,file_path,file_name)
-VALUES(?,?,?,?,?,?,?)
-`
+VALUES(?,?,?,?,?,?,?)`
 
 db.query(sql,
-[year,semester,subject,type,title,newPath,filename],
+[year,semester,subject,type,title,dbPath,filename],
 (err)=>{
 
 if(err){
@@ -193,16 +206,13 @@ res.json({message:"File uploaded successfully"})
 
 })
 
-
 // ================= FETCH MATERIALS =================
 app.get("/materials",(req,res)=>{
 
 const {year,semester,subject,type}=req.query
 
-const sql=`
-SELECT * FROM materials
-WHERE year=? AND semester=? AND subject=? AND type=?
-`
+const sql=`SELECT * FROM materials
+WHERE year=? AND semester=? AND subject=? AND type=?`
 
 db.query(sql,
 [year,semester,subject,type],
@@ -218,17 +228,14 @@ res.json(result)
 
 })
 
-
 // ================= ADD YT PLAYLIST =================
 app.post("/admin/add-yt",(req,res)=>{
 
 const {year,semester,subject,link}=req.body
 
-const sql=`
-INSERT INTO materials
+const sql=`INSERT INTO materials
 (year,semester,subject,type,yt_link)
-VALUES(?,?,?,'yt',?)
-`
+VALUES(?,?,?,'yt',?)`
 
 db.query(sql,
 [year,semester,subject,link],
@@ -244,44 +251,6 @@ res.json({message:"YT Playlist Added"})
 
 })
 
-
-// ================= REPLACE FILE =================
-app.post("/admin/replace",upload.single("pdf"),(req,res)=>{
-
-const {id}=req.body
-
-const file=req.file
-
-const sql="SELECT file_path FROM materials WHERE id=?"
-
-db.query(sql,[id],(err,result)=>{
-
-if(result.length===0){
-return res.status(404).json({message:"Material not found"})
-}
-
-const oldFile=result[0].file_path
-
-if(fs.existsSync(oldFile)){
-fs.unlinkSync(oldFile)
-}
-
-const newPath=`uploads/${file.filename}`
-
-fs.renameSync(file.path,newPath)
-
-db.query(
-"UPDATE materials SET file_path=?, file_name=? WHERE id=?",
-[newPath,file.filename,id]
-)
-
-res.json({message:"File replaced successfully"})
-
-})
-
-})
-
-
 // ================= DELETE MATERIAL =================
 app.delete("/admin/delete",(req,res)=>{
 
@@ -295,10 +264,10 @@ if(result.length===0){
 return res.status(404).json({message:"Material not found"})
 }
 
-const file=result[0].file_path
+const filePath = path.join(__dirname,result[0].file_path)
 
-if(fs.existsSync(file)){
-fs.unlinkSync(file)
+if(fs.existsSync(filePath)){
+fs.unlinkSync(filePath)
 }
 
 db.query("DELETE FROM materials WHERE id=?", [id])
@@ -309,17 +278,14 @@ res.json({message:"Material deleted successfully"})
 
 })
 
-
 // ================= DOWNLOAD TRACK =================
 app.post("/download",(req,res)=>{
 
 const {user_id,subject,file_name,year,semester,type,file_path}=req.body
 
-const sql=`
-INSERT INTO downloads
+const sql=`INSERT INTO downloads
 (user_id,subject,file_name,year,semester,type,file_path)
-VALUES(?,?,?,?,?,?,?)
-`
+VALUES(?,?,?,?,?,?,?)`
 
 db.query(sql,
 [user_id,subject,file_name,year||null,semester||null,type||null,file_path||null],
@@ -335,16 +301,13 @@ res.json({message:"Download Recorded"})
 
 })
 
-
 // ================= ANALYTICS =================
 app.get("/admin/analytics",(req,res)=>{
 
-const sql=`
-SELECT file_name,COUNT(*) AS downloads
+const sql=`SELECT file_name,COUNT(*) AS downloads
 FROM downloads
 GROUP BY file_name
-ORDER BY downloads DESC
-`
+ORDER BY downloads DESC`
 
 db.query(sql,(err,result)=>{
 
@@ -358,16 +321,13 @@ res.json(result)
 
 })
 
-
 // ================= VOTE =================
 app.post("/vote",(req,res)=>{
 
 const {user_id,subject}=req.body
 
-const sql=`
-INSERT INTO votes (user_id,subject)
-VALUES (?,?)
-`
+const sql=`INSERT INTO votes (user_id,subject)
+VALUES (?,?)`
 
 db.query(sql,[user_id,subject],(err)=>{
 
@@ -381,12 +341,10 @@ res.json({message:"Vote Added"})
 
 })
 
-
 // ================= ERROR =================
 app.use((req,res)=>{
 res.status(404).json({message:"Route Not Found"})
 })
-
 
 // ================= SERVER =================
 const PORT=process.env.PORT||5000
