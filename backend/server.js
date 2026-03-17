@@ -23,7 +23,7 @@ app.use(cors({
     "http://localhost:3000",
     "http://localhost:5000"
   ],
-  methods: ["GET", "POST", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }))
 
@@ -74,7 +74,7 @@ app.post("/register", uploadProfile.single("profile_photo"), async (req, res) =>
     let photoPath = null
 
     if (req.file) {
-      photoPath = req.file.path   // CLOUDINARY URL
+      photoPath = req.file.path
     }
 
     const sql = `INSERT INTO users
@@ -107,57 +107,29 @@ app.post("/login", (req, res) => {
     return res.status(400).json({ message: "All fields required" })
   }
 
-  // ADMIN LOGIN
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-
     return res.json({
       message: "Admin Login Success",
-      user: {
-        id: 0,
-        username: "ritik030",
-        role: "admin"
-      }
+      user: { id: 0, username: "ritik030", role: "admin" }
     })
-
   }
 
   db.query(
-    `SELECT id,username,password,first_name,last_name,gender,dob,year,profile_photo 
-    FROM users 
-    WHERE username=? 
-    LIMIT 1`,
+    `SELECT * FROM users WHERE username=? LIMIT 1`,
     [username],
     async (err, result) => {
 
-      if (err) {
-        return res.status(500).json({ message: "Server Error" })
-      }
-
-      if (!result || result.length === 0) {
-        return res.status(404).json({ message: "User Not Found" })
-      }
+      if (err) return res.status(500).json({ message: "Server Error" })
+      if (!result || result.length === 0) return res.status(404).json({ message: "User Not Found" })
 
       const user = result[0]
-
       const match = await bcrypt.compare(password, user.password)
 
-      if (!match) {
-        return res.status(400).json({ message: "Invalid Password" })
-      }
+      if (!match) return res.status(400).json({ message: "Invalid Password" })
 
       res.json({
         message: "Login Success",
-        user: {
-          id: user.id,
-          username: user.username,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          gender: user.gender,
-          dob: user.dob,
-          year: user.year,
-          profile_photo: user.profile_photo,
-          role: "user"
-        }
+        user: { ...user, role: "user" }
       })
 
     })
@@ -169,20 +141,14 @@ app.post("/update-profile", (req, res) => {
 
   const { id, first_name, last_name, gender, dob, year } = req.body
 
-  const sql = `UPDATE users 
-  SET first_name=?,last_name=?,gender=?,dob=?,year=? 
-  WHERE id=?`
-
-  db.query(sql,
+  db.query(
+    `UPDATE users SET first_name=?,last_name=?,gender=?,dob=?,year=? WHERE id=?`,
     [first_name, last_name, gender, dob, year, id],
     (err) => {
-
-      if (err) {
-        return res.status(500).json({ message: "Update failed" })
-      }
-
+      if (err) return res.status(500).json({ message: "Update failed" })
       res.json({ message: "Profile updated" })
-    })
+    }
+  )
 
 })
 
@@ -190,79 +156,53 @@ app.post("/update-profile", (req, res) => {
 app.post("/update-profile-photo", uploadProfile.single("photo"), (req, res) => {
 
   const user_id = req.body.user_id
+  if (!req.file) return res.status(400).json({ message: "No photo uploaded" })
 
-  if (!req.file) {
-    return res.status(400).json({ message: "No photo uploaded" })
-  }
-
-  const newPhoto = req.file.path   // CLOUDINARY URL
+  const newPhoto = req.file.path
 
   db.query(
     "UPDATE users SET profile_photo=? WHERE id=?",
     [newPhoto, user_id],
     (err) => {
-
-      if (err) {
-        return res.status(500).json({ message: "Photo update failed" })
-      }
-
-      res.json({
-        message: "Photo updated",
-        photo: newPhoto
-      })
-
-    })
+      if (err) return res.status(500).json({ message: "Photo update failed" })
+      res.json({ message: "Photo updated", photo: newPhoto })
+    }
+  )
 
 })
 
 // ================= REMOVE PROFILE PHOTO =================
 app.post("/remove-profile-photo", (req, res) => {
-
   const { user_id } = req.body
-
-  db.query(
-    "UPDATE users SET profile_photo=NULL WHERE id=?",
-    [user_id],
-    () => {
-      res.json({ message: "Photo removed" })
-    })
-
+  db.query("UPDATE users SET profile_photo=NULL WHERE id=?", [user_id], () => {
+    res.json({ message: "Photo removed" })
+  })
 })
 
-// ================= ADMIN UPLOAD NOTES =================
+// ================= ADMIN UPLOAD =================
 app.post("/admin/upload", upload.single("pdf"), (req, res) => {
 
   const { year, semester, subject, type, title } = req.body
+  if (!req.file) return res.status(400).json({ message: "No file uploaded" })
 
-  if (!req.file) {
-    return res.status(400).json({ message: "No file uploaded" })
-  }
+  const fileUrl = req.file.path
 
-  const fileUrl = req.file.path   // CLOUDINARY URL
-
-  const sql = `INSERT INTO materials
-  (year,semester,subject,type,title,file_path,file_name)
-  VALUES(?,?,?,?,?,?,?)`
-
-  db.query(sql,
+  db.query(
+    `INSERT INTO materials (year,semester,subject,type,title,file_path,file_name)
+     VALUES(?,?,?,?,?,?,?)`,
     [year, semester, subject, type, title, fileUrl, req.file.originalname],
     (err) => {
-
-      if (err) {
-        return res.status(500).json({ message: "Upload failed" })
-      }
-
-      res.json({
-        message: "File uploaded successfully",
-        url: fileUrl
-      })
-
-    })
+      if (err) return res.status(500).json({ message: "Upload failed" })
+      res.json({ message: "File uploaded successfully", url: fileUrl })
+    }
+  )
 
 })
 
-// ================= FETCH MATERIALS =================
-app.get("/materials", (req, res) => {
+// ================= ADMIN MANAGE APIs =================
+
+// FETCH
+app.get("/admin/materials", (req, res) => {
 
   const { year, semester, subject, type } = req.query
 
@@ -270,14 +210,54 @@ app.get("/materials", (req, res) => {
     "SELECT * FROM materials WHERE year=? AND semester=? AND subject=? AND type=?",
     [year, semester, subject, type],
     (err, result) => {
-
-      if (err) {
-        return res.status(500).json({ message: "Fetch error" })
-      }
-
+      if (err) return res.status(500).json({ message: "Fetch error" })
       res.json(result)
+    }
+  )
 
-    })
+})
+
+// DELETE
+app.delete("/admin/material/:id", (req, res) => {
+
+  const { id } = req.params
+
+  db.query("DELETE FROM materials WHERE id=?", [id], (err) => {
+    if (err) return res.status(500).json({ message: "Delete failed" })
+    res.json({ message: "Deleted successfully" })
+  })
+
+})
+
+// UPDATE TITLE
+app.put("/admin/material/title/:id", (req, res) => {
+
+  const { id } = req.params
+  const { title } = req.body
+
+  db.query("UPDATE materials SET title=? WHERE id=?", [title, id], (err) => {
+    if (err) return res.status(500).json({ message: "Update failed" })
+    res.json({ message: "Title updated" })
+  })
+
+})
+
+// REPLACE PDF
+app.put("/admin/material/replace/:id", upload.single("pdf"), (req, res) => {
+
+  const { id } = req.params
+  if (!req.file) return res.status(400).json({ message: "No file uploaded" })
+
+  const newUrl = req.file.path
+
+  db.query(
+    "UPDATE materials SET file_path=?, file_name=? WHERE id=?",
+    [newUrl, req.file.originalname, id],
+    (err) => {
+      if (err) return res.status(500).json({ message: "Replace failed" })
+      res.json({ message: "File replaced", url: newUrl })
+    }
+  )
 
 })
 
@@ -286,4 +266,4 @@ const PORT = process.env.PORT || 5000
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`)
-})
+})s

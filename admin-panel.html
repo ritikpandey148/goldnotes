@@ -57,7 +57,7 @@ Upload Notes
 
 <input type="text"
 id="title"
-placeholder="Title (Example: Important Questions)"
+placeholder="Title"
 class="w-full border p-2 rounded mb-3">
 
 <input type="file" id="pdfFile" class="mb-4">
@@ -73,7 +73,7 @@ Upload
 
 </div>
 
-<!-- ================= YT PLAYLIST ================= -->
+<!-- ================= YT ================= -->
 
 <div class="card p-6">
 
@@ -95,6 +95,23 @@ Add Playlist
 <p id="ytMsg" class="mt-3 text-sm"></p>
 
 </div>
+
+</div>
+
+<!-- ================= MANAGE NOTES ================= -->
+
+<div class="card p-6 max-w-5xl mx-auto mt-10">
+
+<h2 class="text-xl font-semibold mb-4">
+Manage Notes
+</h2>
+
+<button onclick="loadNotes()"
+class="gold-btn text-white px-4 py-2 rounded mb-4">
+Load Notes
+</button>
+
+<div id="notesList"></div>
 
 </div>
 
@@ -128,119 +145,57 @@ alert("Access Denied")
 window.location.href="/dashboard.html"
 }
 
-
-// ================= SUBJECT DATABASE =================
+// ================= SUBJECT DATA =================
 
 const subjectsData = {
-
-"1stYear":{
-
-"SEM1":["Physics","Chemistry","Mathematics I","Basic Electronics","E-Mechanics","c/c++"],
-
-"SEM2":["Mathematics II","Python","physics-2","chmistry-2","E-Graphics"]
-
-},
-
-"2ndYear":{
-
-"SEM3":["DBMS","AOA","DMGT","EVS","OOP"],
-
-"SEM4":["STO","SEPM","MAM","DT","MDM-info-sec"]
-
-},
-
-"3rdYear":{
-
-"SEM5":["Artificial Intelligence","Web Development","Microprocessors","Data Analytics"],
-
-"SEM6":["Machine Learning","Cloud Computing","Compiler Design","Cyber Security"]
-
-},
-
-"4thYear":{
-
-"SEM7":["Big Data","Blockchain","Internet of Things","Project Phase I"],
-
-"SEM8":["Project Phase II","Advanced AI","Mobile App Development","Entrepreneurship"]
-
+"1stYear":{"SEM1":["Physics","Chemistry","Mathematics I","Basic Electronics","E-Mechanics","c/c++"],"SEM2":["Mathematics II","Python","physics-2","chmistry-2","E-Graphics"]},
+"2ndYear":{"SEM3":["DBMS","AOA","DMGT","EVS","OOP"],"SEM4":["STO","SEPM","MAM","DT","MDM-info-sec"]},
+"3rdYear":{"SEM5":["Artificial Intelligence","Web Development","Microprocessors","Data Analytics"],"SEM6":["Machine Learning","Cloud Computing","Compiler Design","Cyber Security"]},
+"4thYear":{"SEM7":["Big Data","Blockchain","Internet of Things","Project Phase I"],"SEM8":["Project Phase II","Advanced AI","Mobile App Development","Entrepreneurship"]}
 }
-
-}
-
-// ================= SELECTORS =================
 
 const yearSelect=document.getElementById("year")
 const semSelect=document.getElementById("semester")
 const subjectSelect=document.getElementById("subject")
 
-// ================= LOAD YEARS =================
-
 Object.keys(subjectsData).forEach(year=>{
-
 const opt=document.createElement("option")
 opt.value=year
 opt.innerText=year
 yearSelect.appendChild(opt)
-
 })
 
 loadSemesters()
-
 yearSelect.onchange=loadSemesters
 semSelect.onchange=loadSubjects
 
-
-// ================= LOAD SEM =================
-
 function loadSemesters(){
-
 semSelect.innerHTML=""
-
 const sems=subjectsData[yearSelect.value]
-
 Object.keys(sems).forEach(sem=>{
-
 const opt=document.createElement("option")
 opt.value=sem
 opt.innerText=sem
-
 semSelect.appendChild(opt)
-
 })
-
 loadSubjects()
-
 }
-
-
-// ================= LOAD SUBJECT =================
 
 function loadSubjects(){
-
 subjectSelect.innerHTML=""
-
 const subjects=subjectsData[yearSelect.value][semSelect.value]
-
 subjects.forEach(sub=>{
-
 const opt=document.createElement("option")
-
 opt.value=sub
 opt.innerText=sub
-
 subjectSelect.appendChild(opt)
-
 })
-
 }
-
 
 // ================= UPLOAD =================
 
 async function uploadNote(){
-
 const form=new FormData()
-
 form.append("year",yearSelect.value)
 form.append("semester",semSelect.value)
 form.append("subject",subjectSelect.value)
@@ -248,74 +203,130 @@ form.append("type",document.getElementById("type").value)
 form.append("title",document.getElementById("title").value)
 form.append("pdf",document.getElementById("pdfFile").files[0])
 
-const res=await fetch(`${API}/admin/upload`,{
+const res=await fetch(`${API}/admin/upload`,{method:"POST",body:form})
+const data=await res.json()
+document.getElementById("uploadMsg").innerText=data.message
+}
 
-method:"POST",
-body:form
+// ================= LOAD NOTES =================
 
-})
+async function loadNotes(){
+
+const res=await fetch(`${API}/admin/materials?year=${yearSelect.value}&semester=${semSelect.value}&subject=${subjectSelect.value}&type=${document.getElementById("type").value}`)
 
 const data=await res.json()
 
-document.getElementById("uploadMsg").innerText=data.message
+const div=document.getElementById("notesList")
+div.innerHTML=""
+
+data.forEach(note=>{
+
+const box=document.createElement("div")
+box.className="border p-3 rounded mb-3"
+
+box.innerHTML=`
+<h3 class="font-semibold">${note.title}</h3>
+<a href="${note.file_path}" target="_blank" class="text-blue-500">View</a>
+
+<div class="mt-2 space-x-2">
+
+<button onclick="deleteNote(${note.id})" class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+
+<button onclick="replaceNote(${note.id})" class="bg-yellow-500 text-white px-2 py-1 rounded">Replace</button>
+
+<button onclick="editTitle(${note.id})" class="bg-blue-500 text-white px-2 py-1 rounded">Edit Title</button>
+
+</div>
+`
+
+div.appendChild(box)
+
+})
 
 }
 
+// ================= DELETE =================
 
-// ================= ADD YT =================
+async function deleteNote(id){
+if(!confirm("Delete this note?")) return
+await fetch(`${API}/admin/material/${id}`,{method:"DELETE"})
+alert("Deleted")
+loadNotes()
+}
+
+// ================= EDIT TITLE =================
+
+async function editTitle(id){
+const newTitle=prompt("Enter new title")
+if(!newTitle) return
+
+await fetch(`${API}/admin/material/title/${id}`,{
+method:"PUT",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({title:newTitle})
+})
+
+alert("Updated")
+loadNotes()
+}
+
+// ================= REPLACE =================
+
+async function replaceNote(id){
+
+const fileInput=document.createElement("input")
+fileInput.type="file"
+
+fileInput.onchange=async()=>{
+
+const form=new FormData()
+form.append("pdf",fileInput.files[0])
+
+await fetch(`${API}/admin/material/replace/${id}`,{
+method:"PUT",
+body:form
+})
+
+alert("Replaced")
+loadNotes()
+
+}
+
+fileInput.click()
+
+}
+
+// ================= YT =================
 
 async function addYT(){
-
 const res=await fetch(`${API}/admin/add-yt`,{
-
 method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
-
 year:yearSelect.value,
 semester:semSelect.value,
 subject:subjectSelect.value,
 link:document.getElementById("ytLink").value
-
 })
-
 })
-
 const data=await res.json()
-
 document.getElementById("ytMsg").innerText=data.message
-
 }
-
 
 // ================= ANALYTICS =================
 
 async function loadAnalytics(){
-
 const res=await fetch(`${API}/admin/analytics`)
-
 const data=await res.json()
-
 const div=document.getElementById("analytics")
-
 div.innerHTML=""
 
 data.forEach(item=>{
-
 const row=document.createElement("div")
-
 row.className="border-b p-2"
-
 row.innerText=`${item.file_name} — ${item.downloads} downloads`
-
 div.appendChild(row)
-
 })
-
 }
 
 </script>
