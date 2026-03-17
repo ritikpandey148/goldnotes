@@ -2,347 +2,288 @@ require("dotenv").config()
 
 const express = require("express")
 const cors = require("cors")
-const path = require("path")
 const bcrypt = require("bcrypt")
 const multer = require("multer")
-const fs = require("fs")
 const db = require("./db")
+
+// CLOUDINARY
+const cloudinary = require("./cloudinary")
+const { CloudinaryStorage } = require("multer-storage-cloudinary")
 
 const app = express()
 
 // ================= ADMIN LOGIN =================
-const ADMIN_USERNAME="ritik030"
-const ADMIN_PASSWORD="ritikgn030"
+const ADMIN_USERNAME = "ritik030"
+const ADMIN_PASSWORD = "ritikgn030"
 
 // ================= CORS =================
 app.use(cors({
-origin:[
-"https://goldnotes.vercel.app",
-"http://localhost:3000",
-"http://localhost:5000"
-],
-methods:["GET","POST","DELETE"],
-credentials:true
+  origin: [
+    "https://goldnotes.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5000"
+  ],
+  methods: ["GET", "POST", "DELETE"],
+  credentials: true
 }))
 
 app.use(express.json())
 
-// ================= FOLDERS =================
-const uploadsPath = path.join(__dirname,"uploads")
-const profileFolder = path.join(uploadsPath,"profile")
+// ================= CLOUDINARY MULTER =================
 
-if(!fs.existsSync(uploadsPath)){
-fs.mkdirSync(uploadsPath,{recursive:true})
-}
-
-if(!fs.existsSync(profileFolder)){
-fs.mkdirSync(profileFolder,{recursive:true})
-}
-
-// ================= SERVE FILES =================
-app.use("/uploads",express.static(uploadsPath))
-
-// ================= MULTER =================
-const profileStorage = multer.diskStorage({
-
-destination:(req,file,cb)=>{
-cb(null,profileFolder)
-},
-
-filename:(req,file,cb)=>{
-cb(null,Date.now()+"_"+file.originalname)
-}
-
+// Profile Photo
+const profileStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "goldnotes/profile",
+    allowed_formats: ["jpg", "png", "jpeg"],
+  },
 })
 
-const uploadProfile = multer({storage:profileStorage})
+const uploadProfile = multer({ storage: profileStorage })
 
-const storage = multer.diskStorage({
-
-destination:(req,file,cb)=>{
-cb(null,uploadsPath)
-},
-
-filename:(req,file,cb)=>{
-cb(null,Date.now()+"_"+file.originalname)
-}
-
+// Notes PDF
+const pdfStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "goldnotes/notes",
+    resource_type: "auto",
+  },
 })
 
-const upload = multer({storage})
+const upload = multer({ storage: pdfStorage })
 
 // ================= ROOT =================
-app.get("/",(req,res)=>{
-res.send("GoldNotes Backend Running 🚀")
+app.get("/", (req, res) => {
+  res.send("GoldNotes Backend Running 🚀")
 })
 
 // ================= REGISTER =================
-app.post("/register",uploadProfile.single("profile_photo"),async(req,res)=>{
+app.post("/register", uploadProfile.single("profile_photo"), async (req, res) => {
 
-const {first_name,last_name,gender,dob,year,username,password}=req.body
+  const { first_name, last_name, gender, dob, year, username, password } = req.body
 
-if(!first_name||!last_name||!gender||!dob||!year||!username||!password){
-return res.status(400).json({message:"All fields required"})
-}
+  if (!first_name || !last_name || !gender || !dob || !year || !username || !password) {
+    return res.status(400).json({ message: "All fields required" })
+  }
 
-try{
+  try {
 
-const hashedPassword=await bcrypt.hash(password,10)
+    const hashedPassword = await bcrypt.hash(password, 10)
 
-let photoPath = null
+    let photoPath = null
 
-if(req.file){
-photoPath = `uploads/profile/${req.file.filename}`
-}
+    if (req.file) {
+      photoPath = req.file.path   // CLOUDINARY URL
+    }
 
-const sql=`INSERT INTO users
-(first_name,last_name,gender,dob,year,username,password,profile_photo)
-VALUES(?,?,?,?,?,?,?,?)`
+    const sql = `INSERT INTO users
+    (first_name,last_name,gender,dob,year,username,password,profile_photo)
+    VALUES(?,?,?,?,?,?,?,?)`
 
-db.query(sql,
-[first_name,last_name,gender,dob,year,username,hashedPassword,photoPath],
-(err)=>{
+    db.query(sql,
+      [first_name, last_name, gender, dob, year, username, hashedPassword, photoPath],
+      (err) => {
 
-if(err){
-return res.status(400).json({message:"Username exists"})
-}
+        if (err) {
+          return res.status(400).json({ message: "Username exists" })
+        }
 
-res.json({message:"User Registered Successfully"})
-})
+        res.json({ message: "User Registered Successfully" })
+      })
 
-}catch(err){
-res.status(500).json({message:"Server Error"})
-}
+  } catch (err) {
+    res.status(500).json({ message: "Server Error" })
+  }
 
 })
 
 // ================= LOGIN =================
-app.post("/login",(req,res)=>{
+app.post("/login", (req, res) => {
 
-const {username,password}=req.body
+  const { username, password } = req.body
 
-if(!username||!password){
-return res.status(400).json({message:"All fields required"})
-}
+  if (!username || !password) {
+    return res.status(400).json({ message: "All fields required" })
+  }
 
-// ADMIN LOGIN
-if(username===ADMIN_USERNAME && password===ADMIN_PASSWORD){
+  // ADMIN LOGIN
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
 
-return res.json({
-message:"Admin Login Success",
-user:{
-id:0,
-username:"ritik030",
-role:"admin"
-}
-})
+    return res.json({
+      message: "Admin Login Success",
+      user: {
+        id: 0,
+        username: "ritik030",
+        role: "admin"
+      }
+    })
 
-}
+  }
 
-db.query(
-`SELECT id,username,password,first_name,last_name,gender,dob,year,profile_photo 
-FROM users 
-WHERE username=? 
-LIMIT 1`,
-[username],
-async(err,result)=>{
+  db.query(
+    `SELECT id,username,password,first_name,last_name,gender,dob,year,profile_photo 
+    FROM users 
+    WHERE username=? 
+    LIMIT 1`,
+    [username],
+    async (err, result) => {
 
-if(err){
-return res.status(500).json({message:"Server Error"})
-}
+      if (err) {
+        return res.status(500).json({ message: "Server Error" })
+      }
 
-if(!result || result.length===0){
-return res.status(404).json({message:"User Not Found"})
-}
+      if (!result || result.length === 0) {
+        return res.status(404).json({ message: "User Not Found" })
+      }
 
-const user=result[0]
+      const user = result[0]
 
-const match=await bcrypt.compare(password,user.password)
+      const match = await bcrypt.compare(password, user.password)
 
-if(!match){
-return res.status(400).json({message:"Invalid Password"})
-}
+      if (!match) {
+        return res.status(400).json({ message: "Invalid Password" })
+      }
 
-res.json({
-message:"Login Success",
-user:{
-id:user.id,
-username:user.username,
-first_name:user.first_name,
-last_name:user.last_name,
-gender:user.gender,
-dob:user.dob,
-year:user.year,
-profile_photo:user.profile_photo,
-role:"user"
-}
-})
+      res.json({
+        message: "Login Success",
+        user: {
+          id: user.id,
+          username: user.username,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          gender: user.gender,
+          dob: user.dob,
+          year: user.year,
+          profile_photo: user.profile_photo,
+          role: "user"
+        }
+      })
 
-})
+    })
 
 })
 
 // ================= UPDATE PROFILE =================
-app.post("/update-profile",(req,res)=>{
+app.post("/update-profile", (req, res) => {
 
-const {id,first_name,last_name,gender,dob,year}=req.body
+  const { id, first_name, last_name, gender, dob, year } = req.body
 
-const sql=`UPDATE users 
-SET first_name=?,last_name=?,gender=?,dob=?,year=? 
-WHERE id=?`
+  const sql = `UPDATE users 
+  SET first_name=?,last_name=?,gender=?,dob=?,year=? 
+  WHERE id=?`
 
-db.query(sql,
-[first_name,last_name,gender,dob,year,id],
-(err)=>{
+  db.query(sql,
+    [first_name, last_name, gender, dob, year, id],
+    (err) => {
 
-if(err){
-return res.status(500).json({message:"Update failed"})
-}
+      if (err) {
+        return res.status(500).json({ message: "Update failed" })
+      }
 
-res.json({message:"Profile updated"})
-})
+      res.json({ message: "Profile updated" })
+    })
 
 })
 
 // ================= UPDATE PROFILE PHOTO =================
-app.post("/update-profile-photo",uploadProfile.single("photo"),(req,res)=>{
+app.post("/update-profile-photo", uploadProfile.single("photo"), (req, res) => {
 
-const user_id=req.body.user_id
+  const user_id = req.body.user_id
 
-if(!req.file){
-return res.status(400).json({message:"No photo uploaded"})
-}
+  if (!req.file) {
+    return res.status(400).json({ message: "No photo uploaded" })
+  }
 
-const newPhoto=`uploads/profile/${req.file.filename}`
+  const newPhoto = req.file.path   // CLOUDINARY URL
 
-db.query("SELECT profile_photo FROM users WHERE id=?",[user_id],(err,result)=>{
+  db.query(
+    "UPDATE users SET profile_photo=? WHERE id=?",
+    [newPhoto, user_id],
+    (err) => {
 
-if(result && result.length>0 && result[0].profile_photo){
+      if (err) {
+        return res.status(500).json({ message: "Photo update failed" })
+      }
 
-const oldPhoto=path.join(__dirname,result[0].profile_photo)
+      res.json({
+        message: "Photo updated",
+        photo: newPhoto
+      })
 
-if(fs.existsSync(oldPhoto)){
-fs.unlinkSync(oldPhoto)
-}
-
-}
-
-db.query(
-"UPDATE users SET profile_photo=? WHERE id=?",
-[newPhoto,user_id],
-(err)=>{
-
-if(err){
-return res.status(500).json({message:"Photo update failed"})
-}
-
-res.json({
-message:"Photo updated",
-photo:newPhoto
-})
-
-})
-
-})
+    })
 
 })
 
 // ================= REMOVE PROFILE PHOTO =================
-app.post("/remove-profile-photo",(req,res)=>{
+app.post("/remove-profile-photo", (req, res) => {
 
-const {user_id}=req.body
+  const { user_id } = req.body
 
-db.query(
-"SELECT profile_photo FROM users WHERE id=?",
-[user_id],
-(err,result)=>{
-
-if(result && result.length>0 && result[0].profile_photo){
-
-const filePath=path.join(__dirname,result[0].profile_photo)
-
-if(fs.existsSync(filePath)){
-fs.unlinkSync(filePath)
-}
-
-}
-
-db.query(
-"UPDATE users SET profile_photo=NULL WHERE id=?",
-[user_id],
-()=>{
-
-res.json({message:"Photo removed"})
-
-})
-
-})
+  db.query(
+    "UPDATE users SET profile_photo=NULL WHERE id=?",
+    [user_id],
+    () => {
+      res.json({ message: "Photo removed" })
+    })
 
 })
 
 // ================= ADMIN UPLOAD NOTES =================
-app.post("/admin/upload",upload.single("pdf"),(req,res)=>{
+app.post("/admin/upload", upload.single("pdf"), (req, res) => {
 
-const {year,semester,subject,type,title}=req.body
+  const { year, semester, subject, type, title } = req.body
 
-if(!req.file){
-return res.status(400).json({message:"No file uploaded"})
-}
+  if (!req.file) {
+    return res.status(400).json({ message: "No file uploaded" })
+  }
 
-const folder = path.join(uploadsPath,year,semester)
+  const fileUrl = req.file.path   // CLOUDINARY URL
 
-if(!fs.existsSync(folder)){
-fs.mkdirSync(folder,{recursive:true})
-}
+  const sql = `INSERT INTO materials
+  (year,semester,subject,type,title,file_path,file_name)
+  VALUES(?,?,?,?,?,?,?)`
 
-const filename=Date.now()+"_"+req.file.originalname
-const newPath=path.join(folder,filename)
+  db.query(sql,
+    [year, semester, subject, type, title, fileUrl, req.file.originalname],
+    (err) => {
 
-fs.renameSync(req.file.path,newPath)
+      if (err) {
+        return res.status(500).json({ message: "Upload failed" })
+      }
 
-const dbPath=`uploads/${year}/${semester}/${filename}`
+      res.json({
+        message: "File uploaded successfully",
+        url: fileUrl
+      })
 
-const sql=`INSERT INTO materials
-(year,semester,subject,type,title,file_path,file_name)
-VALUES(?,?,?,?,?,?,?)`
-
-db.query(sql,
-[year,semester,subject,type,title,dbPath,filename],
-(err)=>{
-
-if(err){
-return res.status(500).json({message:"Upload failed"})
-}
-
-res.json({message:"File uploaded successfully"})
-
-})
+    })
 
 })
 
 // ================= FETCH MATERIALS =================
-app.get("/materials",(req,res)=>{
+app.get("/materials", (req, res) => {
 
-const {year,semester,subject,type}=req.query
+  const { year, semester, subject, type } = req.query
 
-db.query(
-"SELECT * FROM materials WHERE year=? AND semester=? AND subject=? AND type=?",
-[year,semester,subject,type],
-(err,result)=>{
+  db.query(
+    "SELECT * FROM materials WHERE year=? AND semester=? AND subject=? AND type=?",
+    [year, semester, subject, type],
+    (err, result) => {
 
-if(err){
-return res.status(500).json({message:"Fetch error"})
-}
+      if (err) {
+        return res.status(500).json({ message: "Fetch error" })
+      }
 
-res.json(result)
+      res.json(result)
 
-})
+    })
 
 })
 
 // ================= SERVER =================
-const PORT=process.env.PORT||5000
+const PORT = process.env.PORT || 5000
 
-app.listen(PORT,"0.0.0.0",()=>{
-console.log(`🚀 Server running on port ${PORT}`)
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`)
 })
