@@ -202,18 +202,29 @@ app.post("/admin/upload", upload.single("pdf"), (req, res) => {
 // ================= ADMIN MANAGE APIs =================
 
 // FETCH
-app.get("/admin/materials", (req, res) => {
+app.get("/materials", (req, res) => {
 
   const { year, semester, subject, type } = req.query
 
-  db.query(
-    "SELECT * FROM materials WHERE year=? AND semester=? AND subject=? AND type=?",
-    [year, semester, subject, type],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: "Fetch error" })
-      res.json(result)
+  let sql = "SELECT * FROM materials WHERE year=? AND semester=? AND subject=?"
+  let values = [year, semester, subject]
+
+  // 👉 optional type filter (error avoid)
+  if (type && type !== "all") {
+    sql += " AND type=?"
+    values.push(type)
+  }
+
+  db.query(sql, values, (err, result) => {
+
+    if (err) {
+      console.log("DB ERROR:", err)
+      return res.json([])   // ❗ IMPORTANT FIX
     }
-  )
+
+    res.json(result || [])
+
+  })
 
 })
 
