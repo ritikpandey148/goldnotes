@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <script src="https://cdn.tailwindcss.com"></script>
@@ -63,7 +62,18 @@ const res=await fetch(
 `${API_BASE}/materials?year=${year}&semester=${semester}&subject=${subject}&type=${type}`
 )
 
-const data=await res.json()
+// ✅ SAFE JSON PARSE
+const text=await res.text()
+
+let data
+
+try{
+data=JSON.parse(text)
+}catch{
+console.error("Invalid JSON:",text)
+container.innerHTML="<p class='text-center text-red-500'>Server Error</p>"
+return
+}
 
 container.innerHTML=""
 
@@ -81,18 +91,14 @@ card.className="card p-6"
 
 // ================= YT PLAYLIST =================
 
-if(type==="yt"){
+if(item.yt_link){
 
 card.innerHTML=`
-
 <a href="${item.yt_link}" 
 target="_blank"
 class="gold-btn px-6 py-3 text-white rounded-xl block text-center">
-
 Open YouTube Playlist
-
 </a>
-
 `
 
 }
@@ -101,11 +107,10 @@ Open YouTube Playlist
 
 else{
 
-// Correct File URL
-const fileURL=`${API_BASE}/${item.file_path}`
+// ✅ FIXED (Cloudinary direct URL)
+const fileURL=item.file_path
 
-// Extract file name
-const fileName=item.file_path.split("/").pop()
+const fileName=item.file_name || item.file_path.split("/").pop()
 
 card.innerHTML=`
 
@@ -118,24 +123,20 @@ ${item.title || fileName}
 <a href="${fileURL}"
 target="_blank"
 class="gold-btn px-4 py-2 rounded-xl text-white">
-
 View
-
 </a>
 
 <a href="${fileURL}"
 download
 class="bg-black px-4 py-2 rounded-xl text-white">
-
 Download
-
 </a>
 
 </div>
 
 `
 
-// Track download when clicking download button
+// Track download
 card.querySelector(".bg-black").addEventListener("click",()=>{
 trackDownload(subject,fileName,type,fileURL)
 })
