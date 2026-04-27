@@ -57,8 +57,10 @@ app.get("/", (req, res) => {
 // ================= TEST DB =================
 app.get("/test-db", async (req, res) => {
   try {
-    const result = await db.query("SELECT NOW()")
-    res.json(result.rows)
+    db.query("SELECT NOW()", (err, result) => {
+      if (err) return res.status(500).json("DB Error")
+      res.json(result)
+    })
   } catch (err) {
     console.log(err)
     res.status(500).json("DB Error")
@@ -77,18 +79,23 @@ app.post("/register", uploadProfile.single("profile_photo"), async (req, res) =>
     const hashedPassword = await bcrypt.hash(password, 10)
     const photoPath = req.file ? req.file.path : null
 
-    await db.query(
+    db.query(
       `INSERT INTO users 
       (first_name,last_name,gender,dob,year,username,password,profile_photo)
-      VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [first_name, last_name, gender, dob, year, username, hashedPassword, photoPath]
+      VALUES (?,?,?,?,?,?,?,?)`,
+      [first_name, last_name, gender, dob, year, username, hashedPassword, photoPath],
+      (err, result) => {
+        if (err) {
+          console.log(err)
+          return res.status(400).json({ message: "Username exists or DB error" })
+        }
+        res.json({ message: "User Registered Successfully" })
+      }
     )
-
-    res.json({ message: "User Registered Successfully" })
 
   } catch (err) {
     console.log(err)
-    res.status(400).json({ message: "Username exists or DB error" })
+    res.status(500).json({ message: "Server Error" })
   }
 })
 
@@ -108,24 +115,30 @@ app.post("/login", async (req, res) => {
       })
     }
 
-    const result = await db.query(
-      `SELECT * FROM users WHERE username=$1 LIMIT 1`,
-      [username]
+    db.query(
+      `SELECT * FROM users WHERE username=? LIMIT 1`,
+      [username],
+      async (err, result) => {
+        if (err) {
+          console.log(err)
+          return res.status(500).json({ message: "DB Error" })
+        }
+
+        if (result.length === 0) {
+          return res.status(404).json({ message: "User Not Found" })
+        }
+
+        const user = result[0]
+        const match = await bcrypt.compare(password, user.password)
+
+        if (!match) return res.status(400).json({ message: "Invalid Password" })
+
+        res.json({
+          message: "Login Success",
+          user: { ...user, role: "user" }
+        })
+      }
     )
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User Not Found" })
-    }
-
-    const user = result.rows[0]
-    const match = await bcrypt.compare(password, user.password)
-
-    if (!match) return res.status(400).json({ message: "Invalid Password" })
-
-    res.json({
-      message: "Login Success",
-      user: { ...user, role: "user" }
-    })
 
   } catch (err) {
     console.log(err)
@@ -134,20 +147,25 @@ app.post("/login", async (req, res) => {
 })
 
 // ================= MATERIALS =================
-app.get("/materials", async (req, res) => {
+app.get("/materials", (req, res) => {
   try {
     const { year, semester, subject, type } = req.query
 
-    let sql = "SELECT * FROM materials WHERE year=$1 AND semester=$2 AND subject=$3"
+    let sql = "SELECT * FROM materials WHERE year=? AND semester=? AND subject=?"
     let values = [year, semester, subject]
 
     if (type && type !== "all") {
-      sql += " AND type=$4"
+      sql += " AND type=?"
       values.push(type)
     }
 
-    const result = await db.query(sql, values)
-    res.json(result.rows)
+    db.query(sql, values, (err, result) => {
+      if (err) {
+        console.log(err)
+        return res.json([])
+      }
+      res.json(result)
+    })
 
   } catch (err) {
     console.log(err)
@@ -156,22 +174,27 @@ app.get("/materials", async (req, res) => {
 })
 
 // ================= UPLOAD =================
-app.post("/admin/upload", upload.single("pdf"), async (req, res) => {
+app.post("/admin/upload", upload.single("pdf"), (req, res) => {
   try {
     const { year, semester, subject, type, title } = req.body
     const fileUrl = req.file.path
 
-    await db.query(
+    db.query(
       `INSERT INTO materials (year,semester,subject,type,title,file_path,file_name)
-       VALUES($1,$2,$3,$4,$5,$6,$7)`,
-      [year, semester, subject, type, title, fileUrl, req.file.originalname]
+       VALUES (?,?,?,?,?,?,?)`,
+      [year, semester, subject, type, title, fileUrl, req.file.originalname],
+      (err, result) => {
+        if (err) {
+          console.log(err)
+          return res.status(500).json({ message: "Upload failed" })
+        }
+        res.json({ message: "File uploaded successfully", url: fileUrl })
+      }
     )
-
-    res.json({ message: "File uploaded successfully", url: fileUrl })
 
   } catch (err) {
     console.log(err)
-    res.status(500).json({ message: "Upload failed" })
+    res.status(500).json({ message: "Server Error" })
   }
 })
 
