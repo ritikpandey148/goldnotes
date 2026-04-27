@@ -23,17 +23,14 @@ app.use(cors({
     "http://localhost:3000",
     "http://localhost:5000"
   ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }))
 
 app.use(express.json())
 
-// ================= CLOUDINARY MULTER =================
-
-// Profile Photo
+// ================= CLOUDINARY =================
 const profileStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
+  cloudinary,
   params: {
     folder: "goldnotes/profile",
     allowed_formats: ["jpg", "png", "jpeg"],
@@ -42,9 +39,8 @@ const profileStorage = new CloudinaryStorage({
 
 const uploadProfile = multer({ storage: profileStorage })
 
-// Notes PDF
 const pdfStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
+  cloudinary,
   params: {
     folder: "goldnotes/notes",
     resource_type: "auto",
@@ -58,218 +54,125 @@ app.get("/", (req, res) => {
   res.send("GoldNotes Backend Running 🚀")
 })
 
+// ================= TEST DB =================
+app.get("/test-db", async (req, res) => {
+  try {
+    const result = await db.query("SELECT NOW()")
+    res.json(result.rows)
+  } catch (err) {
+    console.log(err)
+    res.status(500).json("DB Error")
+  }
+})
+
 // ================= REGISTER =================
 app.post("/register", uploadProfile.single("profile_photo"), async (req, res) => {
-
-  const { first_name, last_name, gender, dob, year, username, password } = req.body
-
-  if (!first_name || !last_name || !gender || !dob || !year || !username || !password) {
-    return res.status(400).json({ message: "All fields required" })
-  }
-
   try {
+    const { first_name, last_name, gender, dob, year, username, password } = req.body
 
-    const hashedPassword = await bcrypt.hash(password, 10)
-
-    let photoPath = null
-
-    if (req.file) {
-      photoPath = req.file.path
+    if (!first_name || !last_name || !gender || !dob || !year || !username || !password) {
+      return res.status(400).json({ message: "All fields required" })
     }
 
-    const sql = `INSERT INTO users
-    (first_name,last_name,gender,dob,year,username,password,profile_photo)
-    VALUES(?,?,?,?,?,?,?,?)`
+    const hashedPassword = await bcrypt.hash(password, 10)
+    const photoPath = req.file ? req.file.path : null
 
-    db.query(sql,
-      [first_name, last_name, gender, dob, year, username, hashedPassword, photoPath],
-      (err) => {
+    await db.query(
+      `INSERT INTO users 
+      (first_name,last_name,gender,dob,year,username,password,profile_photo)
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [first_name, last_name, gender, dob, year, username, hashedPassword, photoPath]
+    )
 
-        if (err) {
-          return res.status(400).json({ message: "Username exists" })
-        }
-
-        res.json({ message: "User Registered Successfully" })
-      })
+    res.json({ message: "User Registered Successfully" })
 
   } catch (err) {
-    res.status(500).json({ message: "Server Error" })
+    console.log(err)
+    res.status(400).json({ message: "Username exists or DB error" })
   }
-
 })
 
 // ================= LOGIN =================
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body
 
-  const { username, password } = req.body
+    if (!username || !password) {
+      return res.status(400).json({ message: "All fields required" })
+    }
 
-  if (!username || !password) {
-    return res.status(400).json({ message: "All fields required" })
-  }
-
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    return res.json({
-      message: "Admin Login Success",
-      user: { id: 0, username: "ritik030", role: "admin" }
-    })
-  }
-
-  db.query(
-    `SELECT * FROM users WHERE username=? LIMIT 1`,
-    [username],
-    async (err, result) => {
-
-      if (err) return res.status(500).json({ message: "Server Error" })
-      if (!result || result.length === 0) return res.status(404).json({ message: "User Not Found" })
-
-      const user = result[0]
-      const match = await bcrypt.compare(password, user.password)
-
-      if (!match) return res.status(400).json({ message: "Invalid Password" })
-
-      res.json({
-        message: "Login Success",
-        user: { ...user, role: "user" }
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      return res.json({
+        message: "Admin Login Success",
+        user: { id: 0, username: "ritik030", role: "admin" }
       })
+    }
 
+    const result = await db.query(
+      `SELECT * FROM users WHERE username=$1 LIMIT 1`,
+      [username]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User Not Found" })
+    }
+
+    const user = result.rows[0]
+    const match = await bcrypt.compare(password, user.password)
+
+    if (!match) return res.status(400).json({ message: "Invalid Password" })
+
+    res.json({
+      message: "Login Success",
+      user: { ...user, role: "user" }
     })
 
-})
-
-// ================= UPDATE PROFILE =================
-app.post("/update-profile", (req, res) => {
-
-  const { id, first_name, last_name, gender, dob, year } = req.body
-
-  db.query(
-    `UPDATE users SET first_name=?,last_name=?,gender=?,dob=?,year=? WHERE id=?`,
-    [first_name, last_name, gender, dob, year, id],
-    (err) => {
-      if (err) return res.status(500).json({ message: "Update failed" })
-      res.json({ message: "Profile updated" })
-    }
-  )
-
-})
-
-// ================= UPDATE PROFILE PHOTO =================
-app.post("/update-profile-photo", uploadProfile.single("photo"), (req, res) => {
-
-  const user_id = req.body.user_id
-  if (!req.file) return res.status(400).json({ message: "No photo uploaded" })
-
-  const newPhoto = req.file.path
-
-  db.query(
-    "UPDATE users SET profile_photo=? WHERE id=?",
-    [newPhoto, user_id],
-    (err) => {
-      if (err) return res.status(500).json({ message: "Photo update failed" })
-      res.json({ message: "Photo updated", photo: newPhoto })
-    }
-  )
-
-})
-
-// ================= REMOVE PROFILE PHOTO =================
-app.post("/remove-profile-photo", (req, res) => {
-  const { user_id } = req.body
-  db.query("UPDATE users SET profile_photo=NULL WHERE id=?", [user_id], () => {
-    res.json({ message: "Photo removed" })
-  })
-})
-
-// ================= ADMIN UPLOAD =================
-app.post("/admin/upload", upload.single("pdf"), (req, res) => {
-
-  const { year, semester, subject, type, title } = req.body
-  if (!req.file) return res.status(400).json({ message: "No file uploaded" })
-
-  const fileUrl = req.file.path
-
-  db.query(
-    `INSERT INTO materials (year,semester,subject,type,title,file_path,file_name)
-     VALUES(?,?,?,?,?,?,?)`,
-    [year, semester, subject, type, title, fileUrl, req.file.originalname],
-    (err) => {
-      if (err) return res.status(500).json({ message: "Upload failed" })
-      res.json({ message: "File uploaded successfully", url: fileUrl })
-    }
-  )
-
-})
-
-// ================= ADMIN MANAGE APIs =================
-
-// FETCH
-app.get("/materials", (req, res) => {
-
-  const { year, semester, subject, type } = req.query
-
-  let sql = "SELECT * FROM materials WHERE year=? AND semester=? AND subject=?"
-  let values = [year, semester, subject]
-
-  // 👉 optional type filter (error avoid)
-  if (type && type !== "all") {
-    sql += " AND type=?"
-    values.push(type)
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ message: "Server Error" })
   }
+})
 
-  db.query(sql, values, (err, result) => {
+// ================= MATERIALS =================
+app.get("/materials", async (req, res) => {
+  try {
+    const { year, semester, subject, type } = req.query
 
-    if (err) {
-      console.log("DB ERROR:", err)
-      return res.json([])   // ❗ IMPORTANT FIX
+    let sql = "SELECT * FROM materials WHERE year=$1 AND semester=$2 AND subject=$3"
+    let values = [year, semester, subject]
+
+    if (type && type !== "all") {
+      sql += " AND type=$4"
+      values.push(type)
     }
 
-    res.json(result || [])
+    const result = await db.query(sql, values)
+    res.json(result.rows)
 
-  })
-
+  } catch (err) {
+    console.log(err)
+    res.json([])
+  }
 })
 
-// DELETE
-app.delete("/admin/material/:id", (req, res) => {
+// ================= UPLOAD =================
+app.post("/admin/upload", upload.single("pdf"), async (req, res) => {
+  try {
+    const { year, semester, subject, type, title } = req.body
+    const fileUrl = req.file.path
 
-  const { id } = req.params
+    await db.query(
+      `INSERT INTO materials (year,semester,subject,type,title,file_path,file_name)
+       VALUES($1,$2,$3,$4,$5,$6,$7)`,
+      [year, semester, subject, type, title, fileUrl, req.file.originalname]
+    )
 
-  db.query("DELETE FROM materials WHERE id=?", [id], (err) => {
-    if (err) return res.status(500).json({ message: "Delete failed" })
-    res.json({ message: "Deleted successfully" })
-  })
+    res.json({ message: "File uploaded successfully", url: fileUrl })
 
-})
-
-// UPDATE TITLE
-app.put("/admin/material/title/:id", (req, res) => {
-
-  const { id } = req.params
-  const { title } = req.body
-
-  db.query("UPDATE materials SET title=? WHERE id=?", [title, id], (err) => {
-    if (err) return res.status(500).json({ message: "Update failed" })
-    res.json({ message: "Title updated" })
-  })
-
-})
-
-// REPLACE PDF
-app.put("/admin/material/replace/:id", upload.single("pdf"), (req, res) => {
-
-  const { id } = req.params
-  if (!req.file) return res.status(400).json({ message: "No file uploaded" })
-
-  const newUrl = req.file.path
-
-  db.query(
-    "UPDATE materials SET file_path=?, file_name=? WHERE id=?",
-    [newUrl, req.file.originalname, id],
-    (err) => {
-      if (err) return res.status(500).json({ message: "Replace failed" })
-      res.json({ message: "File replaced", url: newUrl })
-    }
-  )
-
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ message: "Upload failed" })
+  }
 })
 
 // ================= SERVER =================
