@@ -3,10 +3,12 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("./cloudinary");
 
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "goldnotes",
-    resource_type: "auto",
+  cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: "goldnotes",
+      resource_type: "auto",
+    };
   },
 });
 
